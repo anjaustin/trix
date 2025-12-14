@@ -7,12 +7,12 @@ A 2-bit conditional ternary FFN for transformers with **learned computational sp
 ## Why TriX?
 
 TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
-
+````
 - **16× memory compression** (2-bit packed weights; 4 weights/byte) :contentReference[oaicite:3]{index=3}
 - **Sparse compute** (only the winning tile computes per input) :contentReference[oaicite:4]{index=4}
 - **Zero routing parameters** (routing emerges from weight structure) :contentReference[oaicite:5]{index=5}
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) :contentReference[oaicite:6]{index=6}
-
+````
 ## Status / Hardware support
 
 - ✅ **Tested:** Jetson AGX Thor (current dev target) :contentReference[oaicite:7]{index=7}
@@ -33,7 +33,7 @@ pip install -e .
 ```
 
 ## Quick start
-````
+
 ```py
 import torch
 from trix import HierarchicalTriXFFN
@@ -52,8 +52,6 @@ loss = some_task_loss(output) + aux_losses["total_aux"]
 ```
 
 See: `examples/nvidia_quickstart.py` for plug-and-play usage. ([GitHub][1])
-
-````
 
 ## How it works (high level)
 
