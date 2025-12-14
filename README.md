@@ -33,7 +33,7 @@ pip install -e .
 ```
 
 ## Quick start
-
+````
 ```py
 import torch
 from trix import HierarchicalTriXFFN
@@ -52,6 +52,8 @@ loss = some_task_loss(output) + aux_losses["total_aux"]
 ```
 
 See: `examples/nvidia_quickstart.py` for plug-and-play usage. ([GitHub][1])
+
+````
 
 ## How it works (high level)
 
