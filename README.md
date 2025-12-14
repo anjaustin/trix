@@ -13,6 +13,8 @@ TriX is a drop-in replacement for transformer FFN layers that provides:
 - **Zero routing parameters** (routing emerges from weight structure)
 - **13.4% quality improvement** over baseline on language modeling
 
+NOTE: This repo will work as is on a Jeston AGX Thor. It has not been compiled and tested on any other hardware.
+
 ## Quick Start
 
 ```bash
