@@ -14,14 +14,14 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 
 ## Status / Hardware support
 
-- ✅ **Tested:** Jetson AGX Thor (current dev target) :contentReference[oaicite:7]{index=7}
+- ✅ **Tested:** Jetson AGX Thor (current dev target) 
 - ⚠️ **Untested:** other CUDA GPUs, CPU-only, macOS (PRs welcome)
 
-> NOTE: README previously said “Jeston” — should be “Jetson”. :contentReference[oaicite:8]{index=8}
+> NOTE: README previously said “Jeston” — should be “Jetson”. 
 
 ## Install
 
-> TriX depends only on Python + PyTorch + NumPy. :contentReference[oaicite:9]{index=9}
+> TriX depends only on Python + PyTorch + NumPy. 
 
 1) Install PyTorch for your platform (Jetson/CUDA/CPU).
 2) Then:
