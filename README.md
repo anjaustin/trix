@@ -1,7 +1,6 @@
 # TriX
 
-A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**. :contentReference[oaicite:1]{index=1}
-
+A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**.
 > Core idea: **Don’t learn what you can read.**
 ## Why TriX?
 
