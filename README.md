@@ -28,11 +28,11 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 1) Install PyTorch for your platform (Jetson/CUDA/CPU).
 2) Then:
 
+````
+
 ```bash
 pip install -e .
 ```
-
-````
 
 ## Quick start
 
