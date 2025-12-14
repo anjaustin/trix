@@ -1,0 +1,38 @@
+# Emergent Routing Validation Configuration
+# All parameters locked for reproducibility
+
+seed: 42
+
+data:
+  name: tiny_shakespeare
+  url: "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
+  train_split: 0.9
+  context_length: 256
+
+model:
+  d_model: 128
+  n_heads: 4
+  n_layers: 4
+  num_tiles: 4
+  expansion: 4
+  dropout: 0.1
+  vocab_size: null  # Set from data
+
+training:
+  batch_size: 256  # Larger batch for Thor's memory
+  learning_rate: 6.0e-4  # Scale with batch size
+  weight_decay: 0.01
+  epochs: 3  # Reduced for faster iteration
+  warmup_epochs: 1
+  grad_clip: 1.0
+
+evaluation:
+  eval_interval: 1
+  eval_batches: 50
+  routing_samples: 1000
+
+routing_methods:
+  - emergent
+  - learned
+  - random
+  - dense
