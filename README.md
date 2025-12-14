@@ -1,9 +1,6 @@
 # TriX
 
-**2-Bit Sparse Ternary Neural Networks with Emergent Routing**
-
-*Content-addressable memory with learned functions.*  
-*"Qdrant with a brain at every address."*
+**A 2-Bit Conditional Ternary Neural Architecture with Learned Computational Sparsity and Emergent Routing**
 
 ---
 
