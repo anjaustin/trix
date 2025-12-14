@@ -2,17 +2,16 @@
 
 A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**. :contentReference[oaicite:1]{index=1}
 
-> Core idea: **Don’t learn what you can read.** :contentReference[oaicite:2]{index=2}
-
+> Core idea: **Don’t learn what you can read.**
 ## Why TriX?
 
 TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
-````
-- **16× memory compression** (2-bit packed weights; 4 weights/byte) :contentReference[oaicite:3]{index=3}
-- **Sparse compute** (only the winning tile computes per input) :contentReference[oaicite:4]{index=4}
-- **Zero routing parameters** (routing emerges from weight structure) :contentReference[oaicite:5]{index=5}
-- Reported **quality gain** on TinyShakespeare char-LM (see Results) :contentReference[oaicite:6]{index=6}
-````
+
+- **16× memory compression** (2-bit packed weights; 4 weights/byte)
+- **Sparse compute** (only the winning tile computes per input)
+- **Zero routing parameters** (routing emerges from weight structure) 
+- Reported **quality gain** on TinyShakespeare char-LM (see Results) 
+
 ## Status / Hardware support
 
 - ✅ **Tested:** Jetson AGX Thor (current dev target) :contentReference[oaicite:7]{index=7}
