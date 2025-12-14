@@ -1,4 +1,3 @@
-````md
 # TriX
 
 A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**. :contentReference[oaicite:1]{index=1}
@@ -28,7 +27,6 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 1) Install PyTorch for your platform (Jetson/CUDA/CPU).
 2) Then:
 
-````
 
 ```bash
 pip install -e .
