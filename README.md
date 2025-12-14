@@ -134,10 +134,6 @@ docs/
 
 MIT. ([GitHub][1])
 
-````
-
----
-
 ## `scripts/smoke_trix.py` (simple “does it run?” test)
 
 ```py
