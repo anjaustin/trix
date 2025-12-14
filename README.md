@@ -30,6 +30,8 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 
 ```bash
 pip install -e .
+```
+
 ````
 
 ## Quick start
