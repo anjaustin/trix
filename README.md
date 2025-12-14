@@ -225,6 +225,4 @@ python scripts/smoke_trix.py
 
 ---
 
-If you want one extra “chef’s kiss” improvement: I can also sketch a tiny **GitHub Actions workflow** that runs this smoke test on CPU (so every PR proves the repo still imports + forwards), even if the Jetson kernel path is the primary target.
-
 [1]: https://github.com/anjaustin/trix "GitHub - anjaustin/trix: A 2-Bit Conditional Ternary Neural Architecture with Learned Computational Sparsity"
