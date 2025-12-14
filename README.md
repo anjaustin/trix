@@ -1,184 +1,232 @@
+````md
 # TriX
 
-**A 2-Bit Conditional Ternary Neural Architecture with Learned Computational Sparsity and Emergent Routing**
+A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**. :contentReference[oaicite:1]{index=1}
 
----
+> Core idea: **Don’t learn what you can read.** :contentReference[oaicite:2]{index=2}
 
-## What is TriX?
+## Why TriX?
 
-TriX is a drop-in replacement for transformer FFN layers that provides:
+TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 
-- **16x memory compression** (true 2-bit weights, 4 per byte)
-- **4x inference speedup** (sparse routing, only 1 tile computes per input)
-- **Zero routing parameters** (routing emerges from weight structure)
-- **13.4% quality improvement** over baseline on language modeling
+- **16× memory compression** (2-bit packed weights; 4 weights/byte) :contentReference[oaicite:3]{index=3}
+- **Sparse compute** (only the winning tile computes per input) :contentReference[oaicite:4]{index=4}
+- **Zero routing parameters** (routing emerges from weight structure) :contentReference[oaicite:5]{index=5}
+- Reported **quality gain** on TinyShakespeare char-LM (see Results) :contentReference[oaicite:6]{index=6}
 
-NOTE: This repo will work as is on a Jeston AGX Thor. It has not been compiled and tested on any other hardware.
+## Status / Hardware support
 
-## Quick Start
+- ✅ **Tested:** Jetson AGX Thor (current dev target) :contentReference[oaicite:7]{index=7}
+- ⚠️ **Untested:** other CUDA GPUs, CPU-only, macOS (PRs welcome)
+
+> NOTE: README previously said “Jeston” — should be “Jetson”. :contentReference[oaicite:8]{index=8}
+
+## Install
+
+> TriX depends only on Python + PyTorch + NumPy. :contentReference[oaicite:9]{index=9}
+
+1) Install PyTorch for your platform (Jetson/CUDA/CPU).
+2) Then:
 
 ```bash
-pip install torch numpy
 pip install -e .
-```
+````
 
-```python
+## Quick start
+
+```py
+import torch
 from trix import HierarchicalTriXFFN
 
-# Replace your FFN
+x = torch.randn(2, 128, 512)  # (batch, seq, d_model)
+
 ffn = HierarchicalTriXFFN(
     d_model=512,
-    num_tiles=16,          # More tiles = more specialists
+    num_tiles=16,
     tiles_per_cluster=4,
 )
 
-# Use like any PyTorch module
 output, routing_info, aux_losses = ffn(x)
 
-# Training: add aux_losses to your loss
-loss = task_loss + aux_losses['total_aux']
+loss = some_task_loss(output) + aux_losses["total_aux"]
 ```
 
-See `examples/nvidia_quickstart.py` for complete examples.
+See: `examples/nvidia_quickstart.py` for plug-and-play usage. ([GitHub][1])
 
----
+## How it works (high level)
 
-## How It Works
+### 1) Ternary weights = votes
 
-### 1. Ternary Weights = Votes
+Each weight is in `{ -1, 0, +1 }`:
 
-Each weight is {-1, 0, +1}:
-- `+1` = "I want this feature"
-- `-1` = "I want the opposite"  
-- `0` = "I don't care"
+* `+1`: “want this feature”
+* `-1`: “want the opposite”
+* `0`: “don’t care” ([GitHub][1])
 
-### 2. Signatures = Addresses
+### 2) Tile signatures = addresses
 
-Each tile's signature is derived from its weights:
-```python
+Each tile gets a signature derived from its weights:
+
+```py
 signature = weights.sum(dim=0).sign()
 ```
 
-### 3. Routing = Content Lookup
+### 3) Routing = content lookup
 
-Inputs route to the tile whose signature best matches:
-```python
+Inputs route to the tile whose signature matches best:
+
+```py
 scores = input @ signatures.T
 winner = scores.argmax()
 ```
 
-**Zero learned parameters. Three lines of code.**
+No learned router, no router params — just structure. ([GitHub][1])
 
----
+## Key components
 
-## Key Components
+| Component               | Use case                                                  |
+| ----------------------- | --------------------------------------------------------- |
+| `HierarchicalTriXFFN`   | FFN with hierarchical routing (recommended) ([GitHub][1]) |
+| `HierarchicalTriXBlock` | Full transformer block ([GitHub][1])                      |
+| `SparseTriXFFN`         | Simple 4-tile FFN ([GitHub][1])                           |
+| `TriXLinear`            | Low-level ternary linear ([GitHub][1])                    |
 
-| Component | Use Case |
-|-----------|----------|
-| `HierarchicalTriXFFN` | FFN with hierarchical routing (recommended) |
-| `HierarchicalTriXBlock` | Full transformer block |
-| `SparseTriXFFN` | Simple 4-tile FFN |
-| `TriXLinear` | Low-level ternary linear layer |
+## Results
 
----
+Validated on **TinyShakespeare character-level language modeling**. ([GitHub][1])
 
-## Validated Results
+| Model                | Val PPL |          vs baseline |
+| -------------------- | ------: | -------------------: |
+| Sparse-4tiles        |   19.26 |      — ([GitHub][1]) |
+| Hierarchical-16tiles |   16.67 | −13.4% ([GitHub][1]) |
 
-| Model | Val PPL | vs Baseline |
-|-------|---------|-------------|
-| Sparse-4tiles | 19.26 | — |
-| **Hierarchical-16tiles** | **16.67** | **-13.4%** |
+### Reproduce (fill this in)
 
-Tested on TinyShakespeare character-level language modeling.
+> Add the exact commands/configs + expected output here.
 
----
+* Dataset/source:
+* Config:
+* Seed:
+* Train steps:
+* Command:
 
-## Architecture
-
-```
-Input
-  │
-  ▼
-┌─────────────────────────────┐
-│  Input Normalization        │
-└─────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────┐
-│  Cluster Routing (Level 1)  │  ← O(num_clusters) comparisons
-└─────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────┐
-│  Tile Routing (Level 2)     │  ← O(tiles_per_cluster) comparisons
-└─────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────┐
-│  Tile Computation (2-bit)   │  ← Only winning tile computes
-└─────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────┐
-│  Residual Connection        │  ← output = input + tile_output
-└─────────────────────────────┘
-  │
-  ▼
-Output
+```bash
+python -m ...
 ```
 
----
+## Project layout
 
-## Project Structure
-
-```
-trix/
-├── src/trix/
-│   ├── nn/
-│   │   ├── hierarchical.py  # HierarchicalTriXFFN (recommended)
-│   │   ├── sparse.py        # SparseTriXFFN (simple)
-│   │   └── trix.py          # TriXFFN (classic)
-│   ├── kernel/              # 2-bit NEON kernel
-│   └── qat/                 # Quantization-aware training
-├── tests/                   # Test suite
-├── examples/                # Usage examples
-└── docs/                    # Documentation
+```text
+src/trix/
+  nn/          # modules (hierarchical / sparse / classic)
+  kernel/      # 2-bit kernel
+  qat/         # quantization-aware training
+tests/
+examples/
+docs/
 ```
 
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| `docs/BUILD_LOG.md` | Complete development journey |
-| `docs/ABSTRACT.md` | Technical abstract |
-| `docs/BIG_LEAP_SPEC.md` | Hierarchical architecture specification |
-| `examples/nvidia_quickstart.py` | Plug-and-play examples |
-
----
-
-## Core Principle
-
-> **Don't learn what you can read.**
-
-Ternary weights encode preferences.  
-Preferences enable routing.  
-Routing enables sparsity.  
-Sparsity enables speed.
-
----
-
-## Requirements
-
-- Python 3.10+
-- PyTorch 2.0+
-- NumPy
-
-No other dependencies.
-
----
+(See `docs/BUILD_LOG.md`, `docs/ABSTRACT.md`, `docs/BIG_LEAP_SPEC.md`.) ([GitHub][1])
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+MIT. ([GitHub][1])
+
+````
+
+---
+
+## `scripts/smoke_trix.py` (simple “does it run?” test)
+
+```py
+#!/usr/bin/env python3
+"""
+Smoke test for TriX modules.
+
+Goal:
+- import works
+- forward pass works
+- output shape matches input shape
+- aux_losses contains total_aux
+- routing_info is present (even if structure varies)
+"""
+
+import sys
+import torch
+
+def main() -> int:
+    try:
+        from trix import HierarchicalTriXFFN
+    except Exception as e:
+        print("❌ Import failed: from trix import HierarchicalTriXFFN")
+        print(e)
+        return 1
+
+    torch.manual_seed(0)
+
+    # Keep this small so it runs everywhere (CPU included)
+    B, T, D = 2, 16, 64
+    x = torch.randn(B, T, D)
+
+    ffn = HierarchicalTriXFFN(
+        d_model=D,
+        num_tiles=8,
+        tiles_per_cluster=4,
+    )
+
+    try:
+        out, routing_info, aux_losses = ffn(x)
+    except Exception as e:
+        print("❌ Forward pass failed")
+        print(e)
+        return 2
+
+    ok = True
+
+    if not isinstance(out, torch.Tensor):
+        print("❌ output is not a torch.Tensor")
+        ok = False
+    else:
+        print(f"✅ output: {tuple(out.shape)}")
+        if tuple(out.shape) != tuple(x.shape):
+            print(f"❌ expected output shape {tuple(x.shape)}")
+            ok = False
+
+    # routing_info: allow any type, but it must exist
+    print(f"✅ routing_info type: {type(routing_info).__name__}")
+
+    if not isinstance(aux_losses, dict):
+        print("❌ aux_losses is not a dict")
+        ok = False
+    else:
+        keys = sorted(aux_losses.keys())
+        print(f"✅ aux_losses keys: {keys}")
+        if "total_aux" not in aux_losses:
+            print("❌ aux_losses missing 'total_aux'")
+            ok = False
+        else:
+            ta = aux_losses["total_aux"]
+            if isinstance(ta, torch.Tensor):
+                print(f"✅ total_aux: {ta.item() if ta.numel()==1 else ta.shape}")
+            else:
+                print(f"✅ total_aux: {ta}")
+
+    print("✅ SMOKE PASS" if ok else "❌ SMOKE FAIL")
+    return 0 if ok else 3
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+````
+
+Run it:
+
+```bash
+python scripts/smoke_trix.py
+```
+
+---
+
+If you want one extra “chef’s kiss” improvement: I can also sketch a tiny **GitHub Actions workflow** that runs this smoke test on CPU (so every PR proves the repo still imports + forwards), even if the Jetson kernel path is the primary target.
+
+[1]: https://github.com/anjaustin/trix "GitHub - anjaustin/trix: A 2-Bit Conditional Ternary Neural Architecture with Learned Computational Sparsity"
