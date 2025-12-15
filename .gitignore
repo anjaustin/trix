@@ -95,3 +95,7 @@ data/
 flynnconceivable-clean/
 *.jpg
 *.png
+
+# Benchmark outputs
+results/
+*.log

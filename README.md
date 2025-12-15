@@ -32,6 +32,29 @@ pip install -e .
 
 ## Quick start
 
+### SparseLookupFFN (recommended)
+
+```py
+import torch
+from trix import SparseLookupFFN
+
+x = torch.randn(2, 128, 512)  # (batch, seq, d_model)
+
+ffn = SparseLookupFFN(
+    d_model=512,
+    num_tiles=64,
+    tiles_per_cluster=8,
+)
+
+output, routing_info, aux_losses = ffn(x)
+
+loss = some_task_loss(output) + aux_losses["total_aux"]
+```
+
+> *Wisdom is knowing when not to compute.* — SparseLookup uses routing to select directions and splines to modulate magnitude. No matrix multiplies in the hot path.
+
+### HierarchicalTriXFFN (original)
+
 ```py
 import torch
 from trix import HierarchicalTriXFFN
@@ -84,51 +107,61 @@ No learned router, no router params — just structure. ([GitHub][1])
 
 | Component               | Use case                                                  |
 | ----------------------- | --------------------------------------------------------- |
-| `HierarchicalTriXFFN`   | FFN with hierarchical routing (recommended) ([GitHub][1]) |
-| `HierarchicalTriXBlock` | Full transformer block ([GitHub][1])                      |
-| `SparseTriXFFN`         | Simple 4-tile FFN ([GitHub][1])                           |
-| `TriXLinear`            | Low-level ternary linear ([GitHub][1])                    |
+| `SparseLookupFFN`       | **NEW:** Routing IS computation, 2.3× smaller (recommended) |
+| `HierarchicalTriXFFN`   | FFN with hierarchical routing                             |
+| `HierarchicalTriXBlock` | Full transformer block                                    |
+| `SparseTriXFFN`         | Simple 4-tile FFN                                         |
+| `TriXLinear`            | Low-level ternary linear                                  |
 
 ## Results
 
-Validated on **TinyShakespeare character-level language modeling**. ([GitHub][1])
+Validated on **TinyShakespeare character-level language modeling**.
 
-| Model                | Val PPL |          vs baseline |
-| -------------------- | ------: | -------------------: |
-| Sparse-4tiles        |   19.26 |      — ([GitHub][1]) |
-| Hierarchical-16tiles |   16.67 | −13.4% ([GitHub][1]) |
+| Model                | Params  | Val PPL |      vs baseline |
+| -------------------- | ------: | ------: | ---------------: |
+| Sparse-4tiles        |     —   |   19.26 |                — |
+| Hierarchical-16tiles | 826,304 |   17.16 |           −10.9% |
+| **SparseLookup-64**  | **366,412** | **16.56** | **−14.0%** |
 
-### Reproduce (fill this in)
+> **SparseLookupFFN**: 2.3× fewer parameters, best perplexity. *Routing IS the computation.*
 
-> Add the exact commands/configs + expected output here.
-
-* Dataset/source:
-* Config:
-* Seed:
-* Train steps:
-* Command:
+### Reproduce
 
 ```bash
-python -m ...
+# Run the benchmark (compares all FFN types)
+python scripts/benchmark_ffn.py
 ```
+
+* **Dataset:** TinyShakespeare (auto-downloaded)
+* **Config:** d_model=128, n_layers=4, num_tiles=64, tiles_per_cluster=8
+* **Seed:** 42
+* **Epochs:** 10 (20k training samples)
+
+Expected output: SparseLookupFFN achieves lowest PPL with fewest parameters.
 
 ## Project layout
 
 ```text
 src/trix/
-  nn/          # modules (hierarchical / sparse / classic)
-  kernel/      # 2-bit kernel
-  qat/         # quantization-aware training
-tests/
-examples/
-docs/
+  nn/              # modules (SparseLookup / hierarchical / sparse / classic)
+  kernel/          # 2-bit kernel with ARM NEON
+  qat/             # quantization-aware training
+tests/             # 168 tests
+examples/          # usage examples
+scripts/           # benchmark and validation scripts
+notes/             # design exploration and process docs
+docs/              # architecture docs and research notes
 ```
 
 (See `docs/BUILD_LOG.md`, `docs/ABSTRACT.md`, `docs/BIG_LEAP_SPEC.md`.) ([GitHub][1])
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and migration guides.
+
 ## License
 
-MIT. ([GitHub][1])
+MIT.
 
 ## `scripts/smoke_trix.py` (simple “does it run?” test)
 

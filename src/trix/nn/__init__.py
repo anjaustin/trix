@@ -40,6 +40,13 @@ from .hierarchical import (
     HierarchicalTriXBlock,
 )
 
+from .sparse_lookup import (
+    SparseLookupFFN,
+    SparseLookupBlock,
+    TernarySpline2D,
+    FloatSpline2D,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -52,6 +59,11 @@ __all__ = [
     "TriXTile",
     "HierarchicalTriXFFN",
     "HierarchicalTriXBlock",
+    # SparseLookup (Routing IS Computation)
+    "SparseLookupFFN",
+    "SparseLookupBlock",
+    "TernarySpline2D",
+    "FloatSpline2D",
     # Alternative - learned routing
     "Top1Gate",
     "GatedFFN",

@@ -51,7 +51,7 @@ Core Principle:
     Sparsity enables speed.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 # =============================================================================
 # RECOMMENDED: Hierarchical Content-Addressable Memory (The Big Leap)
@@ -62,6 +62,16 @@ from .nn import (
     HierarchicalTriXFFN,    # FFN with 2-level hierarchical routing
     HierarchicalTriXBlock,  # Full transformer block
     TriXTile,               # Individual 2-bit specialist
+)
+
+# =============================================================================
+# NEW: Sparse Lookup (Routing IS The Computation)
+# =============================================================================
+
+from .nn import (
+    SparseLookupFFN,        # Routing selects direction, spline selects magnitude
+    SparseLookupBlock,      # Full transformer block with SparseLookup
+    TernarySpline2D,        # 2D spline with ternary coefficients
 )
 
 # =============================================================================
@@ -126,6 +136,11 @@ __all__ = [
     "HierarchicalTriXFFN",
     "HierarchicalTriXBlock", 
     "TriXTile",
+    
+    # New - Sparse Lookup (Routing IS Computation)
+    "SparseLookupFFN",
+    "SparseLookupBlock",
+    "TernarySpline2D",
     
     # Simple - Sparse Training
     "SparseTriXFFN",
