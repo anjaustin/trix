@@ -1,0 +1,59 @@
+# TriX Small Model Configuration
+# Target: 50M tokens, ~10M parameters
+# Purpose: Hyperparameter validation
+
+experiment:
+  name: "trix-small"
+  description: "Small TriX model for hyperparameter tuning"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 256
+  n_heads: 4
+  n_layers: 6
+  vocab_size: 16384
+  num_tiles: 32
+  tiles_per_cluster: 8
+  grid_size: 16
+  dropout: 0.1
+  
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 200_000_000   # 4 epochs over 50M dataset
+  val_tokens: 2_500_000
+  seq_length: 256
+  
+training:
+  batch_size: 128
+  gradient_accumulation: 2
+  learning_rate: 6.0e-4
+  min_lr: 6.0e-5
+  warmup_tokens: 5_000_000
+  weight_decay: 0.01
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 50
+  eval_interval: 2000
+  save_interval: 5000
+  
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability

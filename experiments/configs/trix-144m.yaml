@@ -1,0 +1,108 @@
+# TriX 144M Model Configuration
+# Target: 144M parameters, 5.8B tokens (2x Chinchilla)
+# Hardware: 8x H100 (~4-6 hours, ~$150)
+# Purpose: Production-scale validation of TriX architecture
+
+experiment:
+  name: "trix-144m"
+  description: "144M param TriX model, 2x Chinchilla optimal, hourly checkpoints"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 768
+  n_heads: 12
+  n_layers: 12
+  vocab_size: 32000
+  num_tiles: 128           # More tiles for larger model
+  tiles_per_cluster: 16
+  grid_size: 16
+  dropout: 0.1
+  
+  # Expected params breakdown:
+  # - Embeddings: 32K × 768 = 24.6M
+  # - Attention (12 layers): 12 × 4 × 768² = 28.3M
+  # - TriX FFN (12 layers): 12 × (128 × 768 + splines) ≈ 12M
+  # - LayerNorms + output: ~2M
+  # - Total: ~144M (will verify on instantiation)
+
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 5_800_000_000   # 2x Chinchilla (2.9B × 2)
+  val_tokens: 50_000_000        # 50M validation tokens
+  seq_length: 1024              # Longer context for larger model
+  
+training:
+  batch_size: 64                # Per-GPU batch size
+  gradient_accumulation: 4      # Effective batch = 64 × 4 × 8 GPUs = 2048
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  warmup_tokens: 580_000_000    # 10% warmup
+  weight_decay: 0.1
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  # Auxiliary loss weights
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 100             # Log every 100 steps
+  eval_interval: 5000           # Evaluate every ~20 minutes
+  save_interval: 8000           # Save checkpoint every ~1 hour
+  
+  # At ~300K tok/s on 8x H100:
+  # - Tokens per step: 64 × 1024 × 4 = 262,144
+  # - Steps per hour: ~4,100 (being conservative)
+  # - save_interval: 8000 ≈ every 1-2 hours
+  
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability
+
+# === RESOURCE ESTIMATES ===
+#
+# 8x H100 (80GB each):
+#   - Model: ~600MB (BF16)
+#   - Optimizer: ~2.4GB
+#   - Activations: ~10-20GB per GPU
+#   - Total: ~25GB per GPU (fits easily)
+#
+# Training time:
+#   - Throughput: ~250-350K tok/s
+#   - Total tokens: 5.8B
+#   - Time: 4.6-6.4 hours
+#
+# Cost (cloud rates):
+#   - 8x H100: ~$24/hr
+#   - Duration: ~5 hours
+#   - Total: ~$120-150
+#
+# Checkpoints:
+#   - Every ~1 hour
+#   - ~5-6 checkpoints total
+#   - ~600MB each (BF16 weights)
+#   - Total storage: ~3.5GB
+#
+# === EXPECTED RESULTS ===
+#
+# Based on scaling laws and tonight's experiments:
+#   - Final loss: ~3.5-4.0 (estimated)
+#   - Val PPL: ~25-40 (estimated)
+#   - Routing entropy: >2.0 (healthy)
+#
+# Comparison targets:
+#   - GPT-2 Small (124M): ~30 PPL on WikiText
+#   - TriX 144M should be competitive or better

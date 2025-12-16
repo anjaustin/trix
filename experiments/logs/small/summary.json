@@ -1,0 +1,17 @@
+{
+  "experiment": "trix-small",
+  "start_time": "2025-12-15T05:34:08.017973",
+  "end_time": "2025-12-15T07:49:20.133315",
+  "duration_seconds": 8112.115354,
+  "final_metrics": {
+    "final_val_loss": 5.595502500410204,
+    "final_val_ppl": 269.2128956994552,
+    "best_val_loss": 5.70176365852356,
+    "best_val_ppl": 299.39496609180554,
+    "total_tokens": 99975168,
+    "total_steps": 3051,
+    "model_params": 6141778
+  },
+  "total_steps": 62,
+  "total_evals": 1
+}

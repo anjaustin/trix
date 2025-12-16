@@ -1,0 +1,17 @@
+{
+  "experiment": "trix-medium",
+  "start_time": "2025-12-15T05:34:07.958642",
+  "end_time": "2025-12-15T15:56:47.926658",
+  "duration_seconds": 37359.968022,
+  "final_metrics": {
+    "final_val_loss": 5.370321770014332,
+    "final_val_ppl": 214.93201525656386,
+    "best_val_loss": Infinity,
+    "best_val_ppl": Infinity,
+    "total_tokens": 249987072,
+    "total_steps": 7629,
+    "model_params": 26251800
+  },
+  "total_steps": 77,
+  "total_evals": 0
+}

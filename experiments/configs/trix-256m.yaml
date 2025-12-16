@@ -1,0 +1,97 @@
+# TriX 256M Model Configuration
+# Target: 256M parameters, 10.2B tokens (2x Chinchilla)
+# Hardware: 8x H100 (~8-12 hours, ~$250)
+# Purpose: Flagship small model, competitive with GPT-2 Medium
+
+experiment:
+  name: "trix-256m"
+  description: "256M param TriX model, 2x Chinchilla optimal, hourly checkpoints"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 1024
+  n_heads: 16
+  n_layers: 16
+  vocab_size: 32000
+  num_tiles: 128
+  tiles_per_cluster: 16
+  grid_size: 16
+  dropout: 0.1
+  
+  # Expected params breakdown:
+  # - Embeddings: 32K × 1024 = 32.8M
+  # - Attention (16 layers): 16 × 4 × 1024² = 67.1M
+  # - TriX FFN (16 layers): 16 × (128 × 1024 + splines) ≈ 20M
+  # - LayerNorms + misc: ~3M
+  # - Total: ~256M (will verify on instantiation)
+
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 10_200_000_000  # 2x Chinchilla (5.1B × 2)
+  val_tokens: 100_000_000       # 100M validation tokens
+  seq_length: 1024
+  
+training:
+  batch_size: 48                # Slightly smaller for memory
+  gradient_accumulation: 8      # Effective batch = 48 × 8 × 8 GPUs = 3072
+  learning_rate: 2.5e-4
+  min_lr: 2.5e-5
+  warmup_tokens: 1_020_000_000  # 10% warmup
+  weight_decay: 0.1
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 100
+  eval_interval: 5000           # Evaluate every ~30 minutes
+  save_interval: 6000           # Save checkpoint every ~1 hour
+  
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability
+
+# === RESOURCE ESTIMATES ===
+#
+# 8x H100:
+#   - Model: ~1GB (BF16)
+#   - Optimizer: ~4GB
+#   - Activations: ~20-30GB per GPU
+#   - Total: ~35GB per GPU (fits in 80GB)
+#
+# Training time:
+#   - Throughput: ~180-250K tok/s
+#   - Total tokens: 10.2B
+#   - Time: 8-12 hours
+#
+# Cost:
+#   - 8x H100: ~$24/hr
+#   - Duration: ~10 hours
+#   - Total: ~$240-280
+#
+# === EXPECTED RESULTS ===
+#
+# Based on scaling laws:
+#   - Final loss: ~3.0-3.5 (estimated)
+#   - Val PPL: ~18-28 (estimated)
+#   - Routing entropy: >2.5 (healthy)
+#
+# Comparison targets:
+#   - GPT-2 Small (124M): ~30 PPL
+#   - GPT-2 Medium (355M): ~22 PPL
+#   - TriX 256M should beat GPT-2 Small, approach Medium

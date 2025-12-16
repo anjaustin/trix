@@ -47,6 +47,18 @@ from .sparse_lookup import (
     FloatSpline2D,
 )
 
+from .sparse_lookup_v2 import (
+    SparseLookupFFNv2,
+    SparseLookupBlockV2,
+    ScoreCalibrationSpline,
+)
+
+from .compiled_dispatch import (
+    CompiledDispatch,
+    CompiledEntry,
+    ProfileStats,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -64,6 +76,14 @@ __all__ = [
     "SparseLookupBlock",
     "TernarySpline2D",
     "FloatSpline2D",
+    # SparseLookup v2 (with Surgery + Regularization)
+    "SparseLookupFFNv2",
+    "SparseLookupBlockV2",
+    "ScoreCalibrationSpline",
+    # Compiled Dispatch (Path Compilation)
+    "CompiledDispatch",
+    "CompiledEntry",
+    "ProfileStats",
     # Alternative - learned routing
     "Top1Gate",
     "GatedFFN",

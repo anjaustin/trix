@@ -1,0 +1,60 @@
+# TriX Tiny Model Configuration - 64 Epochs
+# Target: 320M tokens (64 epochs over 5M dataset)
+# Purpose: Extended training to study convergence and routing behavior
+
+experiment:
+  name: "trix-tiny-64ep"
+  description: "Tiny TriX model with 64 epochs - studying extended training"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 128
+  n_heads: 4
+  n_layers: 3
+  vocab_size: 8192
+  num_tiles: 16
+  tiles_per_cluster: 4
+  grid_size: 16
+  dropout: 0.1
+  
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 320_000_000    # 64 epochs over 5M dataset
+  val_tokens: 250_000
+  seq_length: 256
+  
+training:
+  batch_size: 256
+  gradient_accumulation: 1
+  learning_rate: 1.0e-3
+  min_lr: 1.0e-5              # Lower min LR for extended training
+  warmup_tokens: 500_000
+  weight_decay: 0.01
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  # Auxiliary loss weights
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 10
+  eval_interval: 76           # Evaluate every epoch (5M / 65536 ≈ 76 steps)
+  save_interval: 76           # Checkpoint every epoch
+  
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability

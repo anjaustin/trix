@@ -1,0 +1,59 @@
+# TriX Medium Model Configuration
+# Target: 500M tokens, ~40M parameters
+# Purpose: Full-scale quality evaluation
+
+experiment:
+  name: "trix-medium"
+  description: "Medium TriX model for quality evaluation on natural language"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 512
+  n_heads: 8
+  n_layers: 8
+  vocab_size: 32000
+  num_tiles: 64
+  tiles_per_cluster: 8
+  grid_size: 16
+  dropout: 0.1
+  
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 1_000_000_000  # 2 epochs over 500M dataset
+  val_tokens: 25_000_000
+  seq_length: 512
+  
+training:
+  batch_size: 64
+  gradient_accumulation: 4
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  warmup_tokens: 50_000_000
+  weight_decay: 0.01
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 100
+  eval_interval: 10000
+  save_interval: 25000
+  
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability

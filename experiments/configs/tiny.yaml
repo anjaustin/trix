@@ -1,0 +1,62 @@
+# TriX Tiny Model Configuration
+# Target: 5M tokens, ~2.5M parameters
+# Purpose: Pipeline validation, fast iteration
+
+experiment:
+  name: "trix-tiny"
+  description: "Tiny TriX model for pipeline validation"
+  seed: 42
+
+model:
+  architecture: "SparseLookupFFN"
+  d_model: 128
+  n_heads: 4
+  n_layers: 3
+  vocab_size: 8192
+  num_tiles: 16
+  tiles_per_cluster: 4
+  grid_size: 16
+  dropout: 0.1
+  
+data:
+  dataset: "FineWeb-Edu"
+  total_tokens: 50_000_000    # 10 epochs over 5M dataset
+  val_tokens: 250_000
+  seq_length: 256
+  
+training:
+  batch_size: 256
+  gradient_accumulation: 1
+  learning_rate: 1.0e-3
+  min_lr: 1.0e-4
+  warmup_tokens: 500_000
+  weight_decay: 0.01
+  grad_clip: 1.0
+  precision: "bf16"
+  
+  # Auxiliary loss weights
+  aux_balance_weight: 0.01
+  aux_diversity_weight: 0.001
+
+logging:
+  log_interval: 10        # Log every N steps
+  eval_interval: 500      # Evaluate every N steps
+  save_interval: 1000     # Save checkpoint every N steps
+  
+  # Metrics to track per step
+  step_metrics:
+    - loss
+    - lr
+    - grad_norm
+    - throughput
+    - memory_gb
+    - routing_entropy
+    - aux_balance
+    - aux_diversity
+    
+  # Metrics to track per evaluation
+  eval_metrics:
+    - val_loss
+    - val_ppl
+    - tile_utilization
+    - routing_stability

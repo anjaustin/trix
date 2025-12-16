@@ -1,0 +1,17 @@
+{
+  "experiment": "trix-code",
+  "start_time": "2025-12-15T05:36:58.505513",
+  "end_time": "2025-12-15T14:22:55.107540",
+  "duration_seconds": 31556.602034,
+  "final_metrics": {
+    "final_val_loss": 2.3960094236578615,
+    "final_val_ppl": 10.979275207512634,
+    "best_val_loss": 2.372517349720001,
+    "best_val_ppl": 10.724355284994743,
+    "total_tokens": 187498496,
+    "total_steps": 5722,
+    "model_params": 26251800
+  },
+  "total_steps": 58,
+  "total_evals": 1
+}
