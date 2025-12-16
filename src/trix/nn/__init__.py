@@ -53,6 +53,10 @@ from .sparse_lookup_v2 import (
     ScoreCalibrationSpline,
 )
 
+from .temporal_tiles import (
+    TemporalTileLayer,
+    TemporalTileStack,
+)
 from .compiled_dispatch import (
     CompiledDispatch,
     CompiledEntry,
@@ -84,6 +88,9 @@ __all__ = [
     "CompiledDispatch",
     "CompiledEntry",
     "ProfileStats",
+    # Temporal Tiles (Mesa 4)
+    "TemporalTileLayer",
+    "TemporalTileStack",
     # Alternative - learned routing
     "Top1Gate",
     "GatedFFN",
