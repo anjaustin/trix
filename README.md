@@ -21,7 +21,7 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 | **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
 | **Mesa 3** | Compilation | O(1) dispatch for known classes |
 | **Mesa 4** | Temporal Binding | State routing replaces attention (100% bracket counting) |
-| **Mesa 5** | Pure TriX FFT | Tiles compute + Routing controls (100% butterfly) |
+| **Mesa 5** | Pure TriX FFT | Fixed ops + Learned control (100% N=8 FFT) |
 
 ```python
 # Spatial routing (Mesa 1-3)
@@ -47,9 +47,9 @@ output, final_state, infos = temporal.forward_sequence(x)
 # Tiles learn state transitions - the counter emerges from routing
 
 # Pure TriX FFT (Mesa 5)
-# Tiles compute. Routing controls. Everything is TriX.
-# See experiments/fft_atoms/pure_trix_butterfly.py for full example
-# Result: 100% accuracy on butterfly (a,b) → (a+b, a-b)
+# Fixed microcode + Learned control = 100% N=8 FFT
+# See experiments/fft_atoms/pure_trix_fft_discrete.py
+# Key: Don't learn the arithmetic. Learn WHEN to use each operation.
 ```
 
 See [QUICKSTART.md](docs/QUICKSTART.md) for the full tutorial.

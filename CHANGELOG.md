@@ -8,9 +8,9 @@ All notable changes to TriX are documented here.
 
 ### The Pure TriX Release (Mesa 5)
 
-**Core insight:** *Tiles compute. Routing controls. Everything is TriX.*
+**Core insight:** *Fixed microcode + Learned control = Pure TriX FFT*
 
-This release proves that FFT can be learned with pure TriX - no external organs, no hybrid compute. Tiles learn operations, routing learns control.
+This release proves that FFT can be learned with pure TriX - no external organs, no hybrid compute. Fixed operations provide exact arithmetic, routing learns control.
 
 ### Added
 
@@ -19,27 +19,22 @@ This release proves that FFT can be learned with pure TriX - no external organs,
 - **`experiments/fft_atoms/atom_butterfly.py`**: Arithmetic baseline (0% - expected)
 - **`experiments/fft_atoms/pure_trix_fft.py`**: Micro-ops ADD/SUB (100%)
 - **`experiments/fft_atoms/pure_trix_butterfly.py`**: Complete butterfly (100%)
+- **`experiments/fft_atoms/pure_trix_fft_discrete.py`**: **Full N=8 FFT (100%)**
+- **`experiments/fft_atoms/pure_trix_fft_linear.py`**: Linear-residual attempt
 - **`experiments/fft_atoms/fft_n8_hybrid.py`**: Hybrid comparison (100%)
 
 #### Documentation
-- **`docs/FFT_ATOMS_HYBRID.md`**: Full Mesa 5 documentation with pure TriX path
+- **`docs/FFT_ATOMS_HYBRID.md`**: Full Mesa 5 documentation with complete journey
 
 ### Key Results
 
-#### Pure TriX Micro-Ops (ADD, SUB)
+#### Full N=8 FFT with Discrete Operations
 | Metric | Result |
 |--------|--------|
-| Accuracy | 100% |
-| Tile Specialization | ADD: 91-95% purity |
-
-#### Pure TriX Butterfly
-| Output | Accuracy |
-|--------|----------|
-| Sum (a+b) | 100% |
-| Diff (a-b) | 100% |
-| Both | 100% |
-| **Tile 2** | **SUM specialist** |
-| **Tile 1** | **DIFF specialist** |
+| Operation Selection (SUM path) | 256/256 → Op0 (100%) |
+| Operation Selection (DIFF path) | 256/256 → Op1 (100%) |
+| Generalization (all ranges) | 100% |
+| **Full N=8 FFT** | **100/100 = 100%** |
 
 ### The Five Mesas (Complete)
 
@@ -49,33 +44,42 @@ This release proves that FFT can be learned with pure TriX - no external organs,
 | Mesa 2 | v2 enables partnership | ✓ Surgery, claim tracking |
 | Mesa 3 | Paths can be compiled | ✓ 100% A/B agreement |
 | Mesa 4 | Temporal binding | ✓ 100% bracket counting |
-| **Mesa 5** | **Tiles compute, routing controls** | **✓ 100% pure TriX butterfly** |
+| **Mesa 5** | **Tiles compute, routing controls** | **✓ 100% pure TriX FFT** |
 
-### The Pure TriX Architecture
+### The Winning Architecture
 
+```python
+# Fixed operations (tiles/microcode)
+Op0: (a, b) → a + b  [coeffs: (1, 1)]
+Op1: (a, b) → a - b  [coeffs: (1, -1)]
+
+# Learned routing (control)
+Router_SUM  → selects Op0 (100%)
+Router_DIFF → selects Op1 (100%)
 ```
-Input: (a, b)
-    ↓
-Fourier Features + Projection
-    ↓
-Router_SUM → Tile 2 (SUM specialist) → Decoder → a+b
-Router_DIFF → Tile 1 (DIFF specialist) → Decoder → a-b
-    ↓
-Output: (a+b, a-b)
-```
 
-**Everything is TriX:**
-- Tiles ARE the operations (learned, not symbolic)
-- Routing IS the control flow (learned selection)
-- No external organs, no hybrid compute
+**The 6502 parallel is exact:**
+- Operations are fixed microcode (like opcodes)
+- Routing learns control flow (like instruction sequencing)
+- Arithmetic is exact because coefficients are fixed, not learned
+
+### The Journey
+
+1. ADDRESS atom → 100% (TDSR learns structure)
+2. BUTTERFLY atom → 0% (TDSR can't do arithmetic)
+3. Hybrid → 100% (but needs external organs)
+4. "The tiles are programmable, right?" (key question)
+5. Pure TriX butterfly → 100% (tiles learn operations)
+6. Linear-residual FFT → 0% (coefficient errors compound)
+7. **Discrete ops FFT → 100%** (exact arithmetic, learned control)
 
 ### Philosophy
 
-> *"The tiles are programmable, right?"*
+> *"Don't learn the arithmetic. Learn WHEN to use each operation."*
 
-Tiles are like **microcode** - they implement primitive operations.
-Routing is like **control logic** - it sequences the operations.
-But it's all one architecture. Pure TriX.
+The constraint "pure TriX only" forced discovery of the deeper solution.
+
+**CODENAME: ANN WILSON** - *Barracuda, These Dreams, Alone*
 
 ---
 

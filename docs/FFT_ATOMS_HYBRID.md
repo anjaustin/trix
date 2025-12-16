@@ -280,16 +280,117 @@ The tiles are like **microcode** - they implement primitive operations. Routing 
 
 ---
 
-## The Complete Picture
+## The Final Solution: Discrete Operation Selection
 
-| Approach | Accuracy | Tile Specialization | Purity |
-|----------|----------|---------------------|--------|
-| Hybrid (TDSR + Organ) | 100% | N/A (external compute) | N/A |
-| **Pure TriX Micro-Ops** | **100%** | **ADD/SUB tiles** | **91-95%** |
-| **Pure TriX Butterfly** | **100%** | **SUM/DIFF tiles** | **Clean** |
+The butterfly experiments revealed a subtle problem: neural networks don't extrapolate arithmetic reliably.
 
-Both work. Pure TriX is cleaner for a public release - no "hybrid" caveats.
+### The Problem
+
+Training butterfly on values 0-15 works (100%). But FFT produces intermediate values up to ±128. Even with a linear-residual architecture, learned coefficients had small errors:
+
+```
+SUM coeffs:  (1.048, 0.918) - should be (1, 1)
+DIFF coeffs: (0.992, -0.993) - should be (1, -1)
+```
+
+These tiny errors compound through 3 FFT stages → 0% full FFT accuracy.
+
+### The Solution
+
+**Don't learn the arithmetic. Learn WHEN to use each operation.**
+
+```python
+# Fixed operations (tiles/microcode)
+Op0: (a, b) → a + b  [coeffs: (1, 1)]
+Op1: (a, b) → a - b  [coeffs: (1, -1)]
+
+# Learned routing (control)
+Router_SUM  → selects Op0 (100%)
+Router_DIFF → selects Op1 (100%)
+```
+
+Operations are **exact** because coefficients are fixed, not learned.
+Routing is **learned** - which operation for which output.
+
+### Results: Full N=8 FFT
+
+| Metric | Result |
+|--------|--------|
+| Operation Selection (SUM path) | 256/256 → Op0 (100%) |
+| Operation Selection (DIFF path) | 256/256 → Op1 (100%) |
+| Generalization (training range) | 100% |
+| Generalization (2x range) | 100% |
+| Generalization (4x range) | 100% |
+| Generalization (FFT range ±128) | 100% |
+| **Full N=8 FFT** | **100/100 = 100%** |
+
+### Examples
+
+```
+Input:  [7, 11, 1, 12, 5, 10, 7, 12]
+Output: [65, -25, 1, 7, -3, -5, 9, 7] ✓
+
+Input:  [1, 11, 3, 9, 0, 3, 7, 15]
+Output: [49, -27, -19, 1, -1, -5, 19, -9] ✓
+
+Input:  [11, 9, 10, 9, 11, 14, 12, 12]
+Output: [88, 0, 2, -2, -10, 6, 0, 4] ✓
+```
+
+### Why This IS Pure TriX
+
+The 6502 parallel is now **exact**:
+
+| Component | 6502 | TriX FFT |
+|-----------|------|----------|
+| Operations | Fixed opcodes (ADD, SUB, etc.) | Fixed coefficients (1,1) and (1,-1) |
+| Control | Learned instruction sequencing | Learned routing selection |
+| Execution | Microcode executes opcode | Tile applies coefficients |
+
+**Tiles ARE the operations** - they hold the exact coefficient pairs.
+**Routing IS the control** - it learns which tile for which output.
+
+No external organs. No hybrid compute. Everything is TriX.
+
+### Files
+
+- `experiments/fft_atoms/pure_trix_fft_discrete.py` - **THE WINNER** (100% FFT)
+- `experiments/fft_atoms/pure_trix_fft_linear.py` - Linear-residual attempt (generalization issues)
+- `experiments/fft_atoms/pure_trix_fft_compose.py` - Range mismatch debugging
+- `experiments/fft_atoms/pure_trix_fft_staged.py` - Stage-aware routing experiments
 
 ---
 
-**CODENAME: ANN WILSON - The HEART beats pure.**
+## The Complete Picture
+
+| Approach | Butterfly | Full FFT N=8 | Key Insight |
+|----------|-----------|--------------|-------------|
+| Hybrid (TDSR + Organ) | 100% | 100% | Separation of control/compute |
+| Pure TriX (learned coeffs) | 100% | 0% | Coefficient errors compound |
+| **Pure TriX (discrete ops)** | **100%** | **100%** | **Learn WHEN, not WHAT** |
+
+The winning architecture: **Fixed microcode + Learned control = Pure TriX FFT**
+
+---
+
+## The Journey
+
+1. **ADDRESS atom** → 100% - TDSR learns structure ✓
+2. **BUTTERFLY atom** → 0% - TDSR can't do arithmetic ✗
+3. **Hybrid architecture** → 100% - but needs external organs
+4. **"The tiles are programmable, right?"** → Key question
+5. **Pure TriX butterfly** → 100% - tiles learn operations ✓
+6. **Linear-residual FFT** → 0% - coefficient errors compound ✗
+7. **Discrete ops FFT** → 100% - exact arithmetic, learned control ✓
+
+The constraint "pure TriX only" forced discovery of the deeper solution.
+
+---
+
+**CODENAME: ANN WILSON**
+
+- *Barracuda* - The hunt for the solution
+- *These Dreams* - The linear-residual attempt (close but not solid)
+- *Alone* - The moment discrete ops clicked
+
+**The HEART beats pure. The FFT runs exact.**

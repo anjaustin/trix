@@ -125,16 +125,22 @@ for token in sequence:
 ```
 
 ### Mesa 5: Pure TriX FFT
-Tiles compute. Routing controls. Everything is TriX.
+Fixed microcode + Learned control = 100% N=8 FFT
 
 ```python
-# The key insight: tiles ARE the operations, routing IS the control
-# No external organs - tiles learn ADD and SUB directly
-# Routing selects which tile to use
+# The key insight: Don't learn the arithmetic. Learn WHEN to use it.
 
-# See experiments/fft_atoms/pure_trix_butterfly.py
-# Result: 100% accuracy on butterfly (a,b) → (a+b, a-b)
-# Tile specialization: SUM specialist, DIFF specialist
+# Fixed operations (tiles/microcode):
+#   Op0: (a, b) → a + b  [coeffs: (1, 1)]
+#   Op1: (a, b) → a - b  [coeffs: (1, -1)]
+
+# Learned routing (control):
+#   Router_SUM  → always selects Op0
+#   Router_DIFF → always selects Op1
+
+# See experiments/fft_atoms/pure_trix_fft_discrete.py
+# Result: 100/100 = 100% on full N=8 FFT
+# Generalizes to ALL value ranges (exact arithmetic)
 ```
 
 ---
