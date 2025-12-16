@@ -1,9 +1,11 @@
-# FFT Atoms and the Hybrid Architecture
+# FFT Atoms and Pure TriX Architecture
 
-## Mesa 5: TDSR Routes. Organs Compute.
+## Mesa 5: Tiles Compute. Routing Controls.
 
 **Date:** 2024-12-16  
 **Codename:** ANN WILSON (HEART)
+
+> **Update:** Initial hybrid experiments led to a purer architecture. See "The Pure TriX Path" below.
 
 ---
 
@@ -201,4 +203,93 @@ The tiles ARE the counter. The dispatch table IS the program. The architecture I
 
 ---
 
-**CODENAME: ANN WILSON - The HEART beats on.**
+---
+
+## The Pure TriX Path
+
+The hybrid architecture worked but raised a question: **Can we do this without external organs?**
+
+The answer is yes.
+
+### The Insight
+
+> "The tiles are programmable, right?"
+
+Tiles don't have to *discover* operations - they can *learn* them directly. If we give routing a meaningful job (selecting between ADD and SUB), tiles naturally specialize.
+
+### Pure TriX Micro-Ops
+
+**Experiment:** Train TriX with operation type as input.
+
+```
+Input: (op, a, b)
+  op=0: compute ADD (a+b)
+  op=1: compute SUB (a-b)
+
+Output: result
+```
+
+**Result:** 100% accuracy, tiles specialize to operations.
+
+| Tile | Specialization | Purity |
+|------|----------------|--------|
+| Tile 1 | ADD | 91% |
+| Tile 2 | ADD | 95% |
+| Tile 0 | SUB | 59% |
+
+### Pure TriX Butterfly
+
+**Experiment:** Complete butterfly `(a,b) → (a+b, a-b)` with pure TriX.
+
+```
+Input: (a, b)
+Output: (sum, diff)
+
+Two routing paths:
+- Router_SUM → Tile → Decoder → a+b
+- Router_DIFF → Tile → Decoder → a-b
+```
+
+**Result:** 100% accuracy on all 256 pairs.
+
+```
+Sum (a+b):  100%
+Diff (a-b): 100%
+Both:       100%
+
+Tile Specialization:
+  Tile 2: SUM specialist
+  Tile 1: DIFF specialist
+```
+
+### Why This Is Better
+
+**Hybrid:** TDSR routes to external organs (symbolic compute)
+
+**Pure TriX:** Everything inside TriX
+- Tiles ARE the operations (learned, not symbolic)
+- Routing IS the control flow (learned selection)
+- No external dependencies
+
+The tiles are like **microcode** - they implement primitive operations. Routing is like **control logic** - it sequences the operations. But it's all one architecture.
+
+### Files
+
+- `experiments/fft_atoms/pure_trix_fft.py` - Micro-ops (ADD/SUB): 100%
+- `experiments/fft_atoms/pure_trix_butterfly.py` - Butterfly: 100%
+
+---
+
+## The Complete Picture
+
+| Approach | Accuracy | Tile Specialization | Purity |
+|----------|----------|---------------------|--------|
+| Hybrid (TDSR + Organ) | 100% | N/A (external compute) | N/A |
+| **Pure TriX Micro-Ops** | **100%** | **ADD/SUB tiles** | **91-95%** |
+| **Pure TriX Butterfly** | **100%** | **SUM/DIFF tiles** | **Clean** |
+
+Both work. Pure TriX is cleaner for a public release - no "hybrid" caveats.
+
+---
+
+**CODENAME: ANN WILSON - The HEART beats pure.**

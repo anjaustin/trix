@@ -124,16 +124,17 @@ for token in sequence:
     # Tiles learn state transitions - the counter emerges from routing
 ```
 
-### Mesa 5: Hybrid Architecture
-TDSR routes. Organs compute.
+### Mesa 5: Pure TriX FFT
+Tiles compute. Routing controls. Everything is TriX.
 
 ```python
-# The key insight: separate control from computation
-# - TDSR learns WHEN (routing, control flow)
-# - Organs compute WHAT (exact arithmetic)
+# The key insight: tiles ARE the operations, routing IS the control
+# No external organs - tiles learn ADD and SUB directly
+# Routing selects which tile to use
 
-# See experiments/fft_atoms/fft_n8_hybrid.py for full example
-# Result: 100% accuracy on FFT with learned control + exact compute
+# See experiments/fft_atoms/pure_trix_butterfly.py
+# Result: 100% accuracy on butterfly (a,b) → (a+b, a-b)
+# Tile specialization: SUM specialist, DIFF specialist
 ```
 
 ---

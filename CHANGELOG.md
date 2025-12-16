@@ -6,36 +6,40 @@ All notable changes to TriX are documented here.
 
 ## [0.5.5] - 2024-12-16
 
-### The Hybrid Architecture Release (Mesa 5)
+### The Pure TriX Release (Mesa 5)
 
-**Core insight:** *TDSR routes. Organs compute.*
+**Core insight:** *Tiles compute. Routing controls. Everything is TriX.*
 
-This release validates the clean separation between learned control and exact compute through FFT atom experiments.
+This release proves that FFT can be learned with pure TriX - no external organs, no hybrid compute. Tiles learn operations, routing learns control.
 
 ### Added
 
-#### FFT Atoms (Mesa 5: Hybrid Architecture)
-- **`experiments/fft_atoms/atom_address.py`**: Tests structure learning (100% accuracy)
-- **`experiments/fft_atoms/atom_butterfly.py`**: Tests arithmetic (0% - validates cartographer/compute split)
-- **`experiments/fft_atoms/organ_butterfly_fourier.py`**: Fourier-featured butterfly organ (100%)
-- **`experiments/fft_atoms/fft_n8_hybrid.py`**: Full hybrid FFT with learned control + exact compute (100%)
+#### FFT Atoms (Mesa 5: Pure TriX)
+- **`experiments/fft_atoms/atom_address.py`**: Structure learning (100%)
+- **`experiments/fft_atoms/atom_butterfly.py`**: Arithmetic baseline (0% - expected)
+- **`experiments/fft_atoms/pure_trix_fft.py`**: Micro-ops ADD/SUB (100%)
+- **`experiments/fft_atoms/pure_trix_butterfly.py`**: Complete butterfly (100%)
+- **`experiments/fft_atoms/fft_n8_hybrid.py`**: Hybrid comparison (100%)
 
 #### Documentation
-- **`docs/FFT_ATOMS_HYBRID.md`**: Full documentation of Mesa 5 experiments and findings
+- **`docs/FFT_ATOMS_HYBRID.md`**: Full Mesa 5 documentation with pure TriX path
 
 ### Key Results
 
-#### FFT Atom Tests
-| Atom | Task | Result | Implication |
-|------|------|--------|-------------|
-| ADDRESS | `partner(i,s) = i XOR 2^s` | ✓ 100% | TDSR learns structure |
-| BUTTERFLY | `(a,b) → (a+b, a-b)` | ✗ 0% | TDSR can't do arithmetic |
+#### Pure TriX Micro-Ops (ADD, SUB)
+| Metric | Result |
+|--------|--------|
+| Accuracy | 100% |
+| Tile Specialization | ADD: 91-95% purity |
 
-#### Hybrid FFT N=8
-| Configuration | Accuracy |
-|---------------|----------|
-| Ground Truth Routing + Organ | 100% |
-| **Learned Routing + Organ** | **100%** |
+#### Pure TriX Butterfly
+| Output | Accuracy |
+|--------|----------|
+| Sum (a+b) | 100% |
+| Diff (a-b) | 100% |
+| Both | 100% |
+| **Tile 2** | **SUM specialist** |
+| **Tile 1** | **DIFF specialist** |
 
 ### The Five Mesas (Complete)
 
@@ -45,28 +49,33 @@ This release validates the clean separation between learned control and exact co
 | Mesa 2 | v2 enables partnership | ✓ Surgery, claim tracking |
 | Mesa 3 | Paths can be compiled | ✓ 100% A/B agreement |
 | Mesa 4 | Temporal binding | ✓ 100% bracket counting |
-| **Mesa 5** | **Control + Organs** | **✓ 100% hybrid FFT** |
+| **Mesa 5** | **Tiles compute, routing controls** | **✓ 100% pure TriX butterfly** |
 
-### The Architectural Separation
+### The Pure TriX Architecture
 
 ```
-Input → TDSR (learned control) → Organ (exact compute) → Output
-         ↑                        ↑
-    WHEN (routing)           WHAT (arithmetic)
+Input: (a, b)
+    ↓
+Fourier Features + Projection
+    ↓
+Router_SUM → Tile 2 (SUM specialist) → Decoder → a+b
+Router_DIFF → Tile 1 (DIFF specialist) → Decoder → a-b
+    ↓
+Output: (a+b, a-b)
 ```
 
-- **TDSR** discovers algorithmic structure (FFT addressing: 100%)
-- **Organs** provide exact compute (butterfly: `a+b, a-b`)
-- **Composition** produces full algorithm (N=8 FFT: 100%)
+**Everything is TriX:**
+- Tiles ARE the operations (learned, not symbolic)
+- Routing IS the control flow (learned selection)
+- No external organs, no hybrid compute
 
 ### Philosophy
 
-> *"TDSR routes. Organs compute. This is not a limitation - it's a feature."*
+> *"The tiles are programmable, right?"*
 
-The cartographer/compute split:
-- TDSR maps the territory (which stage, which partner)
-- Organs walk it (exact arithmetic)
-- Algorithm emerges from composition
+Tiles are like **microcode** - they implement primitive operations.
+Routing is like **control logic** - it sequences the operations.
+But it's all one architecture. Pure TriX.
 
 ---
 
