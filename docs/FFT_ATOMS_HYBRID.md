@@ -387,10 +387,78 @@ The constraint "pure TriX only" forced discovery of the deeper solution.
 
 ---
 
+---
+
+## Twiddle Factors: Complex Rotation
+
+The next register item: complex FFT with roots of unity.
+
+### The Insight
+
+Twiddle selection is **structural**, not value-dependent. Like ADDRESS, it's a function of (stage, pos) only.
+
+### Architecture
+
+```python
+# Fixed microcode: exact twiddle factors
+W_0 = 1.0000 + 0.0000i
+W_1 = 0.7071 - 0.7071i
+W_2 = 0.0000 - 1.0000i
+W_3 = -0.7071 - 0.7071i
+# ... (roots of unity)
+
+# Learned routing: structural mapping
+Router: (stage, pos) → W_k index
+```
+
+### Results
+
+| Metric | Result |
+|--------|--------|
+| Router training | 100% in 10 epochs |
+| Twiddle selection | 24/24 correct |
+| Butterfly accuracy | 500/500 = 100% |
+| **Full N=8 complex FFT** | **100/100 = 100%** |
+
+### Learned Twiddle Mapping
+
+```
+Stage 0: W0 W0 W0 W0 W0 W0 W0 W0
+Stage 1: W0 W0 W0 W2 W0 W0 W0 W2
+Stage 2: W0 W0 W0 W0 W0 W1 W2 W3
+```
+
+Same pattern that keeps winning:
+- Learn structure (router)
+- Execute exactly (butterfly microcode)
+
+### Files
+
+- `experiments/fft_atoms/pure_trix_fft_twiddle_v2.py` - **THE WINNER** (100%)
+- `experiments/fft_atoms/pure_trix_fft_twiddle.py` - Initial attempt (97%)
+
+---
+
+## FFT Register Status
+
+| Item | Status | Result |
+|------|--------|--------|
+| ADDRESS | ✅ | 100% structural |
+| BUTTERFLY | ✅ | 100% discrete ops |
+| STAGE CONTROL | ✅ | 100% routing |
+| N=8 REAL FFT | ✅ | 100% composition |
+| TWIDDLE FACTORS | ✅ | 100% complex FFT |
+| N-SCALING | 🔜 | Next |
+| FFT OPCODE | 🔜 | Pending |
+| FFT/IFFT CLOSURE | 🔜 | Pending |
+
+---
+
 **CODENAME: ANN WILSON**
 
 - *Barracuda* - The hunt for the solution
 - *These Dreams* - The linear-residual attempt (close but not solid)
 - *Alone* - The moment discrete ops clicked
+- *What About Love* - Twiddle factors land
 
 **The HEART beats pure. The FFT runs exact.**
