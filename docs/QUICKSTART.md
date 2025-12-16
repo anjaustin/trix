@@ -51,9 +51,9 @@ output, routing_info, aux_losses = ffn(x)
 
 ---
 
-## The Three Mesas
+## The Five Mesas
 
-TriX v2 provides three levels of capability:
+TriX v2 provides five levels of capability:
 
 ### Mesa 1: Discovery
 Tiles specialize to semantic regions automatically.
@@ -102,6 +102,38 @@ print(f"Compiled {len(compiled)} classes")
 output, info, aux = compiler.forward(x, class_hint=class_id, confidence=0.9)
 if info['compiled']:
     print("Used compiled path!")
+```
+
+### Mesa 4: Temporal Binding
+Route based on (input, state) for temporal patterns.
+
+```python
+from trix.nn import TemporalTileLayer
+
+# Create temporal layer
+temporal = TemporalTileLayer(
+    d_model=32,
+    d_state=16,
+    num_tiles=8,
+)
+
+# Process sequence with state
+state = temporal.init_state(batch_size)
+for token in sequence:
+    output, state, info = temporal(token, state)
+    # Tiles learn state transitions - the counter emerges from routing
+```
+
+### Mesa 5: Hybrid Architecture
+TDSR routes. Organs compute.
+
+```python
+# The key insight: separate control from computation
+# - TDSR learns WHEN (routing, control flow)
+# - Organs compute WHAT (exact arithmetic)
+
+# See experiments/fft_atoms/fft_n8_hybrid.py for full example
+# Result: 100% accuracy on FFT with learned control + exact compute
 ```
 
 ---

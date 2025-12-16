@@ -11,9 +11,9 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
-## What's New in v0.5.4
+## What's New in v0.5.5
 
-**The Temporal Tiles Release** - Four mesas of capability:
+**The Hybrid Architecture Release** - Five mesas of capability:
 
 | Mesa | Capability | What It Enables |
 |------|------------|-----------------|
@@ -21,6 +21,7 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 | **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
 | **Mesa 3** | Compilation | O(1) dispatch for known classes |
 | **Mesa 4** | Temporal Binding | State routing replaces attention (100% bracket counting) |
+| **Mesa 5** | Hybrid Architecture | TDSR routes + Organs compute (100% FFT) |
 
 ```python
 # Spatial routing (Mesa 1-3)
@@ -44,6 +45,10 @@ temporal = TemporalTileLayer(d_model=32, d_state=16, num_tiles=8)
 state = temporal.init_state(batch_size=4)
 output, final_state, infos = temporal.forward_sequence(x)
 # Tiles learn state transitions - the counter emerges from routing
+
+# Hybrid architecture (Mesa 5)
+# TDSR routes. Organs compute.
+# See experiments/fft_atoms/fft_n8_hybrid.py for full example
 ```
 
 See [QUICKSTART.md](docs/QUICKSTART.md) for the full tutorial.
@@ -188,6 +193,8 @@ src/trix/
   qat/             # quantization-aware training
 tests/             # 268 tests
 examples/          # usage examples
+experiments/
+  fft_atoms/       # Mesa 5: FFT atom tests and hybrid architecture
 scripts/           # benchmark and validation scripts
 notes/             # design exploration and process docs
 docs/              # architecture docs and research notes

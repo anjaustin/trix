@@ -4,6 +4,72 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.5.5] - 2024-12-16
+
+### The Hybrid Architecture Release (Mesa 5)
+
+**Core insight:** *TDSR routes. Organs compute.*
+
+This release validates the clean separation between learned control and exact compute through FFT atom experiments.
+
+### Added
+
+#### FFT Atoms (Mesa 5: Hybrid Architecture)
+- **`experiments/fft_atoms/atom_address.py`**: Tests structure learning (100% accuracy)
+- **`experiments/fft_atoms/atom_butterfly.py`**: Tests arithmetic (0% - validates cartographer/compute split)
+- **`experiments/fft_atoms/organ_butterfly_fourier.py`**: Fourier-featured butterfly organ (100%)
+- **`experiments/fft_atoms/fft_n8_hybrid.py`**: Full hybrid FFT with learned control + exact compute (100%)
+
+#### Documentation
+- **`docs/FFT_ATOMS_HYBRID.md`**: Full documentation of Mesa 5 experiments and findings
+
+### Key Results
+
+#### FFT Atom Tests
+| Atom | Task | Result | Implication |
+|------|------|--------|-------------|
+| ADDRESS | `partner(i,s) = i XOR 2^s` | ✓ 100% | TDSR learns structure |
+| BUTTERFLY | `(a,b) → (a+b, a-b)` | ✗ 0% | TDSR can't do arithmetic |
+
+#### Hybrid FFT N=8
+| Configuration | Accuracy |
+|---------------|----------|
+| Ground Truth Routing + Organ | 100% |
+| **Learned Routing + Organ** | **100%** |
+
+### The Five Mesas (Complete)
+
+| Mesa | Claim | Status |
+|------|-------|--------|
+| Mesa 1 | Routing IS computation | ✓ 92% tile purity |
+| Mesa 2 | v2 enables partnership | ✓ Surgery, claim tracking |
+| Mesa 3 | Paths can be compiled | ✓ 100% A/B agreement |
+| Mesa 4 | Temporal binding | ✓ 100% bracket counting |
+| **Mesa 5** | **Control + Organs** | **✓ 100% hybrid FFT** |
+
+### The Architectural Separation
+
+```
+Input → TDSR (learned control) → Organ (exact compute) → Output
+         ↑                        ↑
+    WHEN (routing)           WHAT (arithmetic)
+```
+
+- **TDSR** discovers algorithmic structure (FFT addressing: 100%)
+- **Organs** provide exact compute (butterfly: `a+b, a-b`)
+- **Composition** produces full algorithm (N=8 FFT: 100%)
+
+### Philosophy
+
+> *"TDSR routes. Organs compute. This is not a limitation - it's a feature."*
+
+The cartographer/compute split:
+- TDSR maps the territory (which stage, which partner)
+- Organs walk it (exact arithmetic)
+- Algorithm emerges from composition
+
+---
+
 ## [0.5.4] - 2024-12-16
 
 ### The Temporal Tiles Release (Mesa 4)
