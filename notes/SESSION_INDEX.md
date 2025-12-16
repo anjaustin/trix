@@ -1,7 +1,7 @@
-# Session Index: The Compiler Session
+# Session Index: The Compiler + FP4 + Transforms Session
 
 **Date:** December 16, 2025  
-**Outcome:** TriX Compiler v0.7.0
+**Outcome:** TriX Compiler v0.7.0 + FP4 Integration v0.7.1 + Transform Compilation
 
 ---
 
@@ -17,11 +17,15 @@
 | `src/trix/compiler/decompose.py` | Decomposition | ~200 |
 | `src/trix/compiler/verify.py` | Verification | ~300 |
 | `src/trix/compiler/compose.py` | Composition | ~400 |
-| `src/trix/compiler/emit.py` | Code Generation | ~250 |
-| `src/trix/compiler/compiler.py` | Main Compiler | ~250 |
+| `src/trix/compiler/emit.py` | Code Generation | ~450 |
+| `src/trix/compiler/compiler.py` | Main Compiler | ~280 |
+| `src/trix/compiler/atoms_fp4.py` | FP4 Threshold Circuits | ~530 |
+| `src/trix/compiler/fp4_pack.py` | FP4 Packing Utilities | ~280 |
 | `scripts/demo_compiler.py` | Demonstration | ~150 |
+| `scripts/validate_fp4_atoms.py` | FP4 Validation | ~100 |
+| `experiments/fft_atoms/fft_compiler.py` | Transform Compilation | ~720 |
 
-**Total:** ~2,200 lines of new code
+**Total:** ~3,800 lines of new code
 
 ### Documentation
 
@@ -29,14 +33,19 @@
 |------|---------|
 | `src/trix/compiler/README.md` | Compiler documentation |
 | `src/trix/compiler/CHANGELOG.md` | Compiler changelog |
+| `docs/FP4_INTEGRATION.md` | Complete FP4 guide |
+| `docs/FP4_ATOMS_RESULTS.md` | FP4 atom results |
+| `docs/SPEC_FP4_ATOMS.md` | FP4 spec (updated) |
+| `notes/ROADMAP_FP4.md` | FP4 development roadmap |
+| `notes/fp4_plumbing_1_raw.md` | FP4 plumbing reflection (raw) |
+| `notes/fp4_plumbing_2_explore.md` | FP4 plumbing reflection (explore) |
+| `notes/fp4_plumbing_3_convergence.md` | FP4 plumbing reflection (converge) |
 | `notes/session_log_compiler.md` | Session narrative |
-| `notes/mesa_reflection_1_raw.md` | Architecture reflection (raw) |
-| `notes/mesa_reflection_2_explore.md` | Architecture reflection (explore) |
-| `notes/mesa_reflection_3_convergence.md` | Architecture reflection (converge) |
 | `notes/journal_1_raw_experience.md` | Personal journal (raw) |
 | `notes/journal_2_exploration.md` | Personal journal (explore) |
 | `notes/journal_3_convergence.md` | Personal journal (converge) |
-| `CHANGELOG.md` | Updated with v0.7.0 |
+| `docs/FFT_COMPILATION.md` | Transform compilation guide |
+| `CHANGELOG.md` | Updated with v0.7.0 + v0.7.1 |
 
 ### Benchmarks
 
@@ -72,6 +81,27 @@ Atomic Decomposition + Tile Specialization + Verified Composition = Neural CPU
 
 > "The routing learns WHEN. The atoms compute WHAT."
 
+### Transform Discovery
+
+The XOR-based pairing (partner = pos XOR 2^stage) implements **Walsh-Hadamard Transform**, not DFT!
+- WHT: Real-valued, self-inverse, no twiddles
+- DFT: Complex-valued, requires bit-reversal and twiddles
+
+Both transforms compile to the same pattern: **structural routing + exact arithmetic**.
+
+### Twiddle Opcodes (VGem's Key Insight)
+
+**The breakthrough:** No runtime trig! Twiddles become fixed microcode opcodes.
+
+```
+Before: wm = np.cos(-2*pi/m) - i*np.sin(-2*pi/m)  # BAD: runtime computation
+After:  wt = TWIDDLE_OPS[tw_idx](t_re, t_im)      # GOOD: fixed microcode
+```
+
+For N=8, only 8 opcodes needed (algebraic constants like 1, -1, i, -i, sqrt(1/2)).
+
+> "TriX compiles DFT/FFT control and executes spectral rotation via fixed twiddle microcode. No runtime trig."
+
 ---
 
 ## Validated Results
@@ -84,6 +114,11 @@ Atomic Decomposition + Tile Specialization + Verified Composition = Neural CPU
 | Atom Training | 100% accuracy achieved |
 | Circuit Composition | Correct topology generated |
 | File Emission | Valid .trix.json + weights |
+| Walsh-Hadamard N=8,16,32 | 100% exact (compiled routing) |
+| Complex DFT N=8 | **0.00 error** (twiddle opcodes) |
+| Complex DFT N=16 | ~2e-15 error (float precision) |
+| FP4 Threshold Circuits | 10/10 at 100% (construction) |
+| Twiddle Opcodes | 4/8 used for N=8 (no runtime trig!) |
 
 ---
 
@@ -126,13 +161,14 @@ Atomic Decomposition + Tile Specialization + Verified Composition = Neural CPU
 
 ## Session Statistics
 
-- Duration: Extended session
-- Files created: 20+
-- Lines of code: ~2,200
+- Duration: Extended session (continued)
+- Files created: 25+
+- Lines of code: ~3,800
 - Tests passing: All
-- Circuits compiled: 3 templates + custom
+- Circuits compiled: 3 templates + custom + WHT + FFT
 - Benchmarks run: 5+
+- Transforms implemented: WHT (compiled), FFT (Cooley-Tukey)
 
 ---
 
-*Session complete.*
+*Session continuing...*

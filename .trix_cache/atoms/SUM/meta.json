@@ -1,0 +1,14 @@
+{
+  "signature": {
+    "name": "SUM",
+    "input_bits": 3,
+    "output_bits": 1,
+    "description": "Full adder sum (parity)"
+  },
+  "status": "verified",
+  "verification": {
+    "passed": true,
+    "accuracy": 1.0,
+    "total_cases": 8
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "signature": {
+    "name": "XOR",
+    "input_bits": 2,
+    "output_bits": 1,
+    "description": "Logical XOR"
+  },
+  "status": "verified",
+  "verification": {
+    "passed": true,
+    "accuracy": 1.0,
+    "total_cases": 4
+  }
+}

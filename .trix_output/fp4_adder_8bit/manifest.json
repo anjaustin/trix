@@ -1,0 +1,13 @@
+{
+  "name": "adder_8bit",
+  "version": "1.0.0",
+  "compiled_at": "2025-12-16T20:28:00.912125",
+  "compiler_version": "0.1.0-fp4",
+  "verified": true,
+  "weight_format": "fp4",
+  "files": {
+    "adder_8bit.trix.json": "2b237733e737954497c9c2ed8a279112e8d42bc0163fbf5ede02741ebf4cb63c",
+    "weights/CARRY.fp4": "b4218633e4efdbcebf0552c296fa334d5e8c14b3e0589fe6e191ba9dc8e07678",
+    "weights/SUM.fp4": "c16814eaa78dc3a6fd575a5bd123230f4cc158bfac8eb7ba794380a84c86c4ae"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "adder_8bit",
+  "version": "1.0.0",
+  "compiled_at": "2025-12-16T19:47:52.703571",
+  "compiler_version": "0.1.0",
+  "verified": true,
+  "files": {
+    "adder_8bit.trix.json": "5455255d56b012514b61136531fc63c96a845826a4b30443d87a3797bd3d4466",
+    "weights/CARRY.pt": "ba8467bae8ef6ed2969421b2f513c00f475219af42481f134a92564c972f5dfc",
+    "weights/SUM.pt": "3a841f677e711c4b8dcd1bafc938e35759e2913a11e77d8ae9eaf1e115f22664"
+  }
+}

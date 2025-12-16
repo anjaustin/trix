@@ -1,0 +1,196 @@
+{
+  "name": "full_adder",
+  "version": "1.0.0",
+  "compiled_at": "2025-12-16T20:27:43.468710",
+  "compiler_version": "0.1.0-fp4",
+  "verified": true,
+  "verification_accuracy": 1.0,
+  "num_tiles": 2,
+  "tile_configs": [
+    {
+      "tile_id": "TILE_0000_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_atom",
+      "input_wires": [
+        "A",
+        "B",
+        "Cin"
+      ],
+      "output_wires": [
+        "Sum"
+      ],
+      "signature": [
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/SUM.fp4",
+      "weight_format": "fp4"
+    },
+    {
+      "tile_id": "TILE_0001_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_atom",
+      "input_wires": [
+        "A",
+        "B",
+        "Cin"
+      ],
+      "output_wires": [
+        "Cout"
+      ],
+      "signature": [
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.fp4",
+      "weight_format": "fp4"
+    }
+  ],
+  "num_routes": 8,
+  "routes": [
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 0,
+      "wire": "A"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 1,
+      "wire": "B"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 2,
+      "wire": "Cin"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 0,
+      "wire": "A"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 1,
+      "wire": "B"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 2,
+      "wire": "Cin"
+    },
+    {
+      "source_tile": "TILE_0000_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 0,
+      "wire": "Sum"
+    },
+    {
+      "source_tile": "TILE_0001_CARRY",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 0,
+      "wire": "Cout"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "A",
+      "wire": "A"
+    },
+    {
+      "name": "B",
+      "wire": "B"
+    },
+    {
+      "name": "Cin",
+      "wire": "Cin"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Sum",
+      "wire": "Sum"
+    },
+    {
+      "name": "Cout",
+      "wire": "Cout"
+    }
+  ],
+  "execution_order": [
+    "TILE_0000_SUM",
+    "TILE_0001_CARRY"
+  ]
+}

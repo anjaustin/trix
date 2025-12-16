@@ -4,6 +4,170 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.7.1] - 2025-12-16
+
+### The FP4 Release
+
+**Core achievement:** *Exact computation in 4 bits. Construction, not training.*
+
+This release adds FP4 support to the TriX Compiler - threshold circuit atoms that are exact by construction, packed into 4-bit format.
+
+### Added
+
+#### FP4 Atoms
+- 10 threshold circuit atoms verified at 100% accuracy
+- Exact by construction (no training convergence risk)
+- Minterm generator for custom atoms
+
+#### FP4 Packing
+- Custom 4-bit encoding with lookup tables
+- Zero quantization error
+- `.fp4` weight file format
+
+#### Compiler Integration
+- `TriXCompiler(use_fp4=True)` for FP4 mode
+- `FP4Emitter`, `FP4Loader`, `FP4CompiledCircuit`
+- End-to-end pipeline tested
+
+### Key Insight
+
+> "Don't train atoms to be exact. Construct them to be exact."
+
+FP4 atoms use threshold circuits with hand-crafted weights:
+- Weights: {-1, 0, +1}
+- Biases: {-2.5, -1.5, -0.5, 0.5, 1.5}
+
+All values fit in 4-bit encoding. Exactness guaranteed.
+
+### Results
+
+| Circuit | Float32 | FP4 | Status |
+|---------|---------|-----|--------|
+| Full Adder | 100B | 58B | 100% exact |
+| 8-bit Adder | 100B | 58B | 100% exact |
+
+### Documentation
+
+- `docs/FP4_INTEGRATION.md` - Complete FP4 guide
+- `docs/FP4_ATOMS_RESULTS.md` - Detailed results
+- `notes/ROADMAP_FP4.md` - Development roadmap
+
+---
+
+## [0.7.0] - 2025-12-16
+
+### The Compiler Release
+
+**Core achievement:** *Spec → Decompose → Verify → Compose → Emit. The neural network has become a computer.*
+
+This release introduces the TriX Compiler - a complete toolchain for transforming high-level circuit specifications into verified neural circuits that compute **exactly**.
+
+### Added
+
+#### TriX Compiler (`src/trix/compiler/`)
+
+- **AtomLibrary** (`atoms.py`)
+  - Pre-verified atomic operations: AND, OR, XOR, NOT, NAND, NOR, XNOR, SUM, CARRY, MUX
+  - Exhaustive verification (100% accuracy required)
+  - Truth table-based atom definition
+  - Atom serialization and caching
+
+- **CircuitSpec** (`spec.py`)
+  - Circuit specification language
+  - Wire types: INPUT, OUTPUT, INTERNAL
+  - Multi-bit wire support
+  - Built-in templates: full_adder, adder_8bit, adder_16bit, adder_32bit
+
+- **Decomposer** (`decompose.py`)
+  - Circuit decomposition into atoms
+  - Dependency graph analysis
+  - Topological sort for execution order
+
+- **Verifier** (`verify.py`)
+  - Atom verification to 100% accuracy
+  - Parallel verification support
+  - Exhaustive circuit verification with oracle functions
+
+- **Composer** (`compose.py`)
+  - Tile allocation (Hollywood Squares model)
+  - Route generation
+  - Signature generation for content-addressable routing
+  - CircuitExecutor for runtime execution
+
+- **Emitter** (`emit.py`)
+  - TrixConfig generation (.trix.json)
+  - Weight file emission
+  - Manifest with checksums
+  - TrixLoader for loading compiled circuits
+
+- **TriXCompiler** (`compiler.py`)
+  - Main compiler orchestrating full pipeline
+  - Template support
+  - compile_and_test helper
+
+#### Demo
+
+- **`scripts/demo_compiler.py`** - Full demonstration of compiler capabilities
+
+#### Documentation
+
+- **`src/trix/compiler/README.md`** - Compiler documentation
+- **`src/trix/compiler/CHANGELOG.md`** - Compiler changelog
+- **`notes/mesa_reflection_*.md`** - Architectural reflections
+
+### Key Results
+
+| Circuit | Atoms | Tiles | Verification |
+|---------|-------|-------|--------------|
+| Full Adder | 2 | 2 | 100% (8/8 cases) |
+| 8-bit Adder | 2 | 16 | 100% (all arithmetic) |
+| 16-bit Adder | 2 | 32 | 100% |
+| Custom Circuits | Variable | Variable | 100% required |
+
+### The Pipeline
+
+```
+┌─────────┐    ┌───────────┐    ┌────────┐    ┌─────────┐    ┌──────┐
+│  Spec   │ -> │ Decompose │ -> │ Verify │ -> │ Compose │ -> │ Emit │
+└─────────┘    └───────────┘    └────────┘    └─────────┘    └──────┘
+     │              │               │              │             │
+ CircuitSpec   Atom Types      100% Exact     Topology      Files
+```
+
+### Usage
+
+```python
+from trix.compiler import TriXCompiler
+
+compiler = TriXCompiler()
+result = compiler.compile("adder_8bit")
+
+# Execute
+inputs = {"A[0]": 1, "B[0]": 1, "Cin": 0, ...}
+outputs = result.execute(inputs)
+
+# Emit to files
+result = compiler.compile("adder_8bit", output_dir="./output")
+```
+
+### Theory
+
+The compiler implements the "Neural Von Neumann" architecture discovered through analysis of:
+
+- **TriX** - Tile specialization and routing
+- **FLYNNCONCEIVABLE** - Neural networks as exact CPUs (460,928 cases, 100% accuracy)
+- **Hollywood Squares OS** - Compositional correctness theorem
+
+**Key insight:** "The routing learns WHEN. The atoms compute WHAT."
+
+### Philosophy
+
+> *"We are not building a Model. We are building a Machine."*
+
+The TriX Compiler proves that neural networks can be **compiled**, not just trained. The weights are the circuit. The inference is the computation. Exactness is inherited from verified components.
+
+---
+
 ## [0.6.1] - 2024-12-16
 
 ### The Complete FFT Release

@@ -1,0 +1,1223 @@
+{
+  "name": "adder_8bit",
+  "version": "1.0.0",
+  "compiled_at": "2025-12-16T19:47:52.703571",
+  "compiler_version": "0.1.0",
+  "verified": true,
+  "verification_accuracy": 1.0,
+  "num_tiles": 16,
+  "tile_configs": [
+    {
+      "tile_id": "TILE_0000_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_0",
+      "input_wires": [
+        "A[0]",
+        "B[0]",
+        "Cin"
+      ],
+      "output_wires": [
+        "Sum[0]"
+      ],
+      "signature": [
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0001_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_0",
+      "input_wires": [
+        "A[0]",
+        "B[0]",
+        "Cin"
+      ],
+      "output_wires": [
+        "C[0]"
+      ],
+      "signature": [
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0002_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_1",
+      "input_wires": [
+        "A[1]",
+        "B[1]",
+        "C[0]"
+      ],
+      "output_wires": [
+        "Sum[1]"
+      ],
+      "signature": [
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0003_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_1",
+      "input_wires": [
+        "A[1]",
+        "B[1]",
+        "C[0]"
+      ],
+      "output_wires": [
+        "C[1]"
+      ],
+      "signature": [
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0004_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_2",
+      "input_wires": [
+        "A[2]",
+        "B[2]",
+        "C[1]"
+      ],
+      "output_wires": [
+        "Sum[2]"
+      ],
+      "signature": [
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0005_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_2",
+      "input_wires": [
+        "A[2]",
+        "B[2]",
+        "C[1]"
+      ],
+      "output_wires": [
+        "C[2]"
+      ],
+      "signature": [
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0006_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_3",
+      "input_wires": [
+        "A[3]",
+        "B[3]",
+        "C[2]"
+      ],
+      "output_wires": [
+        "Sum[3]"
+      ],
+      "signature": [
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0007_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_3",
+      "input_wires": [
+        "A[3]",
+        "B[3]",
+        "C[2]"
+      ],
+      "output_wires": [
+        "C[3]"
+      ],
+      "signature": [
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0008_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_4",
+      "input_wires": [
+        "A[4]",
+        "B[4]",
+        "C[3]"
+      ],
+      "output_wires": [
+        "Sum[4]"
+      ],
+      "signature": [
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0009_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_4",
+      "input_wires": [
+        "A[4]",
+        "B[4]",
+        "C[3]"
+      ],
+      "output_wires": [
+        "C[4]"
+      ],
+      "signature": [
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0010_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_5",
+      "input_wires": [
+        "A[5]",
+        "B[5]",
+        "C[4]"
+      ],
+      "output_wires": [
+        "Sum[5]"
+      ],
+      "signature": [
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0011_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_5",
+      "input_wires": [
+        "A[5]",
+        "B[5]",
+        "C[4]"
+      ],
+      "output_wires": [
+        "C[5]"
+      ],
+      "signature": [
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0012_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_6",
+      "input_wires": [
+        "A[6]",
+        "B[6]",
+        "C[5]"
+      ],
+      "output_wires": [
+        "Sum[6]"
+      ],
+      "signature": [
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0013_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_6",
+      "input_wires": [
+        "A[6]",
+        "B[6]",
+        "C[5]"
+      ],
+      "output_wires": [
+        "C[6]"
+      ],
+      "signature": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    },
+    {
+      "tile_id": "TILE_0014_SUM",
+      "atom_type": "SUM",
+      "atom_instance": "sum_7",
+      "input_wires": [
+        "A[7]",
+        "B[7]",
+        "C[6]"
+      ],
+      "output_wires": [
+        "Sum[7]"
+      ],
+      "signature": [
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0
+      ],
+      "weight_file": "weights/SUM.pt"
+    },
+    {
+      "tile_id": "TILE_0015_CARRY",
+      "atom_type": "CARRY",
+      "atom_instance": "carry_7",
+      "input_wires": [
+        "A[7]",
+        "B[7]",
+        "C[6]"
+      ],
+      "output_wires": [
+        "Cout"
+      ],
+      "signature": [
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        1.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        0.0,
+        1.0,
+        -1.0,
+        1.0,
+        -1.0
+      ],
+      "weight_file": "weights/CARRY.pt"
+    }
+  ],
+  "num_routes": 57,
+  "routes": [
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 0,
+      "wire": "A[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 1,
+      "wire": "B[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0000_SUM",
+      "dest_port": 2,
+      "wire": "Cin"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 0,
+      "wire": "A[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 1,
+      "wire": "B[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 0,
+      "dest_tile": "TILE_0001_CARRY",
+      "dest_port": 2,
+      "wire": "Cin"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 1,
+      "dest_tile": "TILE_0002_SUM",
+      "dest_port": 0,
+      "wire": "A[1]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 1,
+      "dest_tile": "TILE_0002_SUM",
+      "dest_port": 1,
+      "wire": "B[1]"
+    },
+    {
+      "source_tile": "TILE_0001_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0002_SUM",
+      "dest_port": 2,
+      "wire": "C[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 1,
+      "dest_tile": "TILE_0003_CARRY",
+      "dest_port": 0,
+      "wire": "A[1]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 1,
+      "dest_tile": "TILE_0003_CARRY",
+      "dest_port": 1,
+      "wire": "B[1]"
+    },
+    {
+      "source_tile": "TILE_0001_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0003_CARRY",
+      "dest_port": 2,
+      "wire": "C[0]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 2,
+      "dest_tile": "TILE_0004_SUM",
+      "dest_port": 0,
+      "wire": "A[2]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 2,
+      "dest_tile": "TILE_0004_SUM",
+      "dest_port": 1,
+      "wire": "B[2]"
+    },
+    {
+      "source_tile": "TILE_0003_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0004_SUM",
+      "dest_port": 2,
+      "wire": "C[1]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 2,
+      "dest_tile": "TILE_0005_CARRY",
+      "dest_port": 0,
+      "wire": "A[2]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 2,
+      "dest_tile": "TILE_0005_CARRY",
+      "dest_port": 1,
+      "wire": "B[2]"
+    },
+    {
+      "source_tile": "TILE_0003_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0005_CARRY",
+      "dest_port": 2,
+      "wire": "C[1]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 3,
+      "dest_tile": "TILE_0006_SUM",
+      "dest_port": 0,
+      "wire": "A[3]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 3,
+      "dest_tile": "TILE_0006_SUM",
+      "dest_port": 1,
+      "wire": "B[3]"
+    },
+    {
+      "source_tile": "TILE_0005_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0006_SUM",
+      "dest_port": 2,
+      "wire": "C[2]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 3,
+      "dest_tile": "TILE_0007_CARRY",
+      "dest_port": 0,
+      "wire": "A[3]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 3,
+      "dest_tile": "TILE_0007_CARRY",
+      "dest_port": 1,
+      "wire": "B[3]"
+    },
+    {
+      "source_tile": "TILE_0005_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0007_CARRY",
+      "dest_port": 2,
+      "wire": "C[2]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 4,
+      "dest_tile": "TILE_0008_SUM",
+      "dest_port": 0,
+      "wire": "A[4]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 4,
+      "dest_tile": "TILE_0008_SUM",
+      "dest_port": 1,
+      "wire": "B[4]"
+    },
+    {
+      "source_tile": "TILE_0007_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0008_SUM",
+      "dest_port": 2,
+      "wire": "C[3]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 4,
+      "dest_tile": "TILE_0009_CARRY",
+      "dest_port": 0,
+      "wire": "A[4]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 4,
+      "dest_tile": "TILE_0009_CARRY",
+      "dest_port": 1,
+      "wire": "B[4]"
+    },
+    {
+      "source_tile": "TILE_0007_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0009_CARRY",
+      "dest_port": 2,
+      "wire": "C[3]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 5,
+      "dest_tile": "TILE_0010_SUM",
+      "dest_port": 0,
+      "wire": "A[5]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 5,
+      "dest_tile": "TILE_0010_SUM",
+      "dest_port": 1,
+      "wire": "B[5]"
+    },
+    {
+      "source_tile": "TILE_0009_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0010_SUM",
+      "dest_port": 2,
+      "wire": "C[4]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 5,
+      "dest_tile": "TILE_0011_CARRY",
+      "dest_port": 0,
+      "wire": "A[5]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 5,
+      "dest_tile": "TILE_0011_CARRY",
+      "dest_port": 1,
+      "wire": "B[5]"
+    },
+    {
+      "source_tile": "TILE_0009_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0011_CARRY",
+      "dest_port": 2,
+      "wire": "C[4]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 6,
+      "dest_tile": "TILE_0012_SUM",
+      "dest_port": 0,
+      "wire": "A[6]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 6,
+      "dest_tile": "TILE_0012_SUM",
+      "dest_port": 1,
+      "wire": "B[6]"
+    },
+    {
+      "source_tile": "TILE_0011_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0012_SUM",
+      "dest_port": 2,
+      "wire": "C[5]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 6,
+      "dest_tile": "TILE_0013_CARRY",
+      "dest_port": 0,
+      "wire": "A[6]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 6,
+      "dest_tile": "TILE_0013_CARRY",
+      "dest_port": 1,
+      "wire": "B[6]"
+    },
+    {
+      "source_tile": "TILE_0011_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0013_CARRY",
+      "dest_port": 2,
+      "wire": "C[5]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 7,
+      "dest_tile": "TILE_0014_SUM",
+      "dest_port": 0,
+      "wire": "A[7]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 7,
+      "dest_tile": "TILE_0014_SUM",
+      "dest_port": 1,
+      "wire": "B[7]"
+    },
+    {
+      "source_tile": "TILE_0013_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0014_SUM",
+      "dest_port": 2,
+      "wire": "C[6]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 7,
+      "dest_tile": "TILE_0015_CARRY",
+      "dest_port": 0,
+      "wire": "A[7]"
+    },
+    {
+      "source_tile": "__INPUT__",
+      "source_port": 7,
+      "dest_tile": "TILE_0015_CARRY",
+      "dest_port": 1,
+      "wire": "B[7]"
+    },
+    {
+      "source_tile": "TILE_0013_CARRY",
+      "source_port": 0,
+      "dest_tile": "TILE_0015_CARRY",
+      "dest_port": 2,
+      "wire": "C[6]"
+    },
+    {
+      "source_tile": "TILE_0000_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 0,
+      "wire": "Sum[0]"
+    },
+    {
+      "source_tile": "TILE_0002_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 1,
+      "wire": "Sum[1]"
+    },
+    {
+      "source_tile": "TILE_0004_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 2,
+      "wire": "Sum[2]"
+    },
+    {
+      "source_tile": "TILE_0006_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 3,
+      "wire": "Sum[3]"
+    },
+    {
+      "source_tile": "TILE_0008_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 4,
+      "wire": "Sum[4]"
+    },
+    {
+      "source_tile": "TILE_0010_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 5,
+      "wire": "Sum[5]"
+    },
+    {
+      "source_tile": "TILE_0012_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 6,
+      "wire": "Sum[6]"
+    },
+    {
+      "source_tile": "TILE_0014_SUM",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 7,
+      "wire": "Sum[7]"
+    },
+    {
+      "source_tile": "TILE_0015_CARRY",
+      "source_port": 0,
+      "dest_tile": "__OUTPUT__",
+      "dest_port": 0,
+      "wire": "Cout"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "A",
+      "wire": "A"
+    },
+    {
+      "name": "B",
+      "wire": "B"
+    },
+    {
+      "name": "Cin",
+      "wire": "Cin"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Sum",
+      "wire": "Sum"
+    },
+    {
+      "name": "Cout",
+      "wire": "Cout"
+    }
+  ],
+  "execution_order": [
+    "TILE_0000_SUM",
+    "TILE_0001_CARRY",
+    "TILE_0002_SUM",
+    "TILE_0003_CARRY",
+    "TILE_0004_SUM",
+    "TILE_0005_CARRY",
+    "TILE_0006_SUM",
+    "TILE_0007_CARRY",
+    "TILE_0008_SUM",
+    "TILE_0009_CARRY",
+    "TILE_0010_SUM",
+    "TILE_0011_CARRY",
+    "TILE_0012_SUM",
+    "TILE_0013_CARRY",
+    "TILE_0014_SUM",
+    "TILE_0015_CARRY"
+  ]
+}
