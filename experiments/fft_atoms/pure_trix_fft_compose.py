@@ -289,6 +289,7 @@ def main():
     # Test FFT composition
     print("\n[FFT COMPOSITION TEST]")
     
+    fft_range = CONFIG['value_range'] * N
     num_correct = 0
     num_tests = 100
     
@@ -296,7 +297,7 @@ def main():
         x = [np.random.randint(0, CONFIG['value_range']) for _ in range(N)]
         
         expected = reference_fft(x)
-        predicted = run_fft(model, x, device)
+        predicted = run_fft(model, x, device, fft_range)
         
         if expected == predicted:
             num_correct += 1
@@ -315,7 +316,7 @@ def main():
     for _ in range(20):
         x = [np.random.randint(0, CONFIG['value_range']) for _ in range(N)]
         expected = reference_fft(x)
-        predicted = run_fft(model, x, device)
+        predicted = run_fft(model, x, device, fft_range)
         
         if expected == predicted and shown < 3:
             print(f"  ✓ {x} → {predicted}")
