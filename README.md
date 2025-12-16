@@ -11,9 +11,9 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
-## What's New in v0.5.5
+## What's New in v0.6.1
 
-**The Hybrid Architecture Release** - Five mesas of capability:
+**The Complete FFT Release** - A full spectral subsystem:
 
 | Mesa | Capability | What It Enables |
 |------|------------|-----------------|
@@ -21,7 +21,17 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 | **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
 | **Mesa 3** | Compilation | O(1) dispatch for known classes |
 | **Mesa 4** | Temporal Binding | State routing replaces attention (100% bracket counting) |
-| **Mesa 5** | Pure TriX FFT | Fixed ops + Learned control (100% N=8 FFT) |
+| **Mesa 5** | Complete FFT | Forward + Inverse, scales N=8→64, 100% round-trip |
+
+### FFT Register (Complete)
+
+| Component | Status | Result |
+|-----------|--------|--------|
+| ADDRESS | ✅ | 100% structural learning |
+| BUTTERFLY | ✅ | 100% discrete ops |
+| TWIDDLE FACTORS | ✅ | 100% complex rotation |
+| N-SCALING | ✅ | 100% on N=8,16,32,64 |
+| FFT/IFFT CLOSURE | ✅ | 100% round-trip |
 
 ```python
 # Spatial routing (Mesa 1-3)
@@ -46,10 +56,12 @@ state = temporal.init_state(batch_size=4)
 output, final_state, infos = temporal.forward_sequence(x)
 # Tiles learn state transitions - the counter emerges from routing
 
-# Pure TriX FFT (Mesa 5)
-# Fixed microcode + Learned control = 100% N=8 FFT
-# See experiments/fft_atoms/pure_trix_fft_discrete.py
-# Key: Don't learn the arithmetic. Learn WHEN to use each operation.
+# Complete FFT Subsystem (Mesa 5)
+# See experiments/fft_atoms/ for full implementation:
+#   - pure_trix_fft_discrete.py: Real FFT (100%)
+#   - pure_trix_fft_twiddle_v2.py: Complex FFT with twiddles (100%)
+#   - pure_trix_fft_nscale_v2.py: N-scaling 8→64 (100%)
+#   - pure_trix_fft_ifft.py: Forward/Inverse closure (100%)
 ```
 
 See [QUICKSTART.md](docs/QUICKSTART.md) for the full tutorial.

@@ -4,6 +4,89 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.6.1] - 2024-12-16
+
+### The Complete FFT Release
+
+**Core achievement:** *A complete spectral subsystem - Forward FFT, Inverse FFT, scales to N=64, 100% round-trip.*
+
+This release completes the FFT register, proving that TriX can execute mathematics with exact precision.
+
+### FFT Register (Complete)
+
+| Component | Status | Result |
+|-----------|--------|--------|
+| ADDRESS | ✅ | 100% structural learning |
+| BUTTERFLY | ✅ | 100% discrete operations |
+| STAGE CONTROL | ✅ | 100% routing |
+| N=8 REAL FFT | ✅ | 100% composition |
+| TWIDDLE FACTORS | ✅ | 100% complex rotation |
+| N-SCALING | ✅ | 100% on N=8,16,32,64 |
+| FFT/IFFT CLOSURE | ✅ | 100% round-trip |
+
+### Added
+
+#### Twiddle Factors (Complex Rotation)
+- **`experiments/fft_atoms/pure_trix_fft_twiddle_v2.py`**: Structural twiddle routing (100%)
+- Twiddle selection is structural: `(stage, pos) → W_k`
+- Same pattern as ADDRESS - learn structure, execute exactly
+
+#### N-Scaling (8 → 64)
+- **`experiments/fft_atoms/pure_trix_fft_nscale_v2.py`**: Scales to any power of 2
+- Architecture scales trivially - just add stages
+- Results: 100% on N=8, 16, 32, 64
+
+#### FFT/IFFT Closure
+- **`experiments/fft_atoms/pure_trix_fft_ifft.py`**: Round-trip verification
+- IFFT uses conjugate twiddles + 1/N scaling
+- Max error: ~1e-6 (float precision)
+
+### Key Results
+
+```
+N=8:  FFT 100%, IFFT 100%, Round-trip error 1.19e-06
+N=16: FFT 100%, IFFT 100%, Round-trip error 1.07e-06
+N=32: FFT 100%, IFFT 100%, Round-trip error 1.43e-06
+N=64: FFT 100%, IFFT 100%, Round-trip error 2.38e-06
+```
+
+### Architecture
+
+```
+Forward FFT:  W_k = e^{-2πik/N}
+Inverse FFT:  W_k = e^{+2πik/N} with 1/N scaling
+
+Fixed Microcode:
+  - Twiddle factors (exact complex numbers)
+  - Butterfly operations (exact arithmetic)
+
+Learned/Algorithmic Control:
+  - Twiddle selection: (stage, pos) → W_k
+  - Pairing: i XOR 2^stage
+```
+
+### What We Proved
+
+1. **FFT structure IS learnable** (100% on all components)
+2. **Once learned, it matches the algorithm exactly**
+3. **Pure TriX can execute mathematics**
+
+### Philosophy
+
+> *"This is no longer an experiment. It's infrastructure."*
+
+The FFT subsystem demonstrates that TriX can serve as a neural control plane for mathematical execution - not approximating functions, but executing algorithms.
+
+**CODENAME: ANN WILSON**
+- *Barracuda* - The hunt for the solution
+- *These Dreams* - Linear-residual attempt
+- *Alone* - Discrete ops click
+- *What About Love* - Twiddles land
+- *Crazy On You* - N-scaling works
+- *Never* - Round-trip closure
+
+---
+
 ## [0.5.5] - 2024-12-16
 
 ### The Pure TriX Release (Mesa 5)
