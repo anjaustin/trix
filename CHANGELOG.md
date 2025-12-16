@@ -4,6 +4,60 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.5.4] - 2024-12-16
+
+### The Temporal Tiles Release (Mesa 4)
+
+**Core insight:** *State is contracted time. Discrete routing can replace attention for counting.*
+
+This release introduces temporal tiles - extending TriX from spatial routing into temporal binding.
+
+### Added
+
+#### Temporal Tiles (Mesa 4: Temporal Binding)
+- **`TemporalTileLayer`**: Routes based on (input, state), learns state transitions
+- **`TemporalTileStack`**: Multiple temporal layers with different configurations
+- **Transition tracking**: Observe which tiles transition to which
+- **Regime analysis**: Identify stable tiles, hub tiles, self-transition probabilities
+
+#### Bracket Counting Experiment
+- **`experiments/bracket_depth_simple.py`**: Canonical test for temporal tiles
+- **100% accuracy** on depth prediction
+- Tiles self-organize into depth specialists without supervision
+
+#### Tests
+- **`tests/test_temporal_tiles.py`**: 26 comprehensive tests
+- **Total: 268 tests** (all passing)
+
+#### Documentation
+- **`docs/TEMPORAL_TILES_ABSTRACT.md`**: Full abstract and experimental record
+
+### Key Results
+
+| Tile | Learned Role | Purity |
+|------|--------------|--------|
+| T0 | Ground state (depth=0) | 100% |
+| T2 | Maximum depth (depth=4) | 100% |
+| T3 | Deep states / closing | 95-100% |
+| T5 | Mid-depth states | 78-96% |
+
+### The Four Mesas (Complete)
+
+| Mesa | Claim | Status |
+|------|-------|--------|
+| Mesa 1 | Routing IS computation | ✓ 92% tile purity |
+| Mesa 2 | v2 enables partnership | ✓ Surgery, claim tracking |
+| Mesa 3 | Paths can be compiled | ✓ 100% A/B agreement |
+| **Mesa 4** | **Temporal binding** | **✓ 100% bracket counting** |
+
+### Philosophy
+
+> *"What is state, really? State is contracted time - the past compressed into something the present can use."*
+
+Temporal tiles don't remember tokens. They track *regimes* - phases of computation with discrete transitions. The tiles ARE the counter.
+
+---
+
 ## [0.5.3] - 2024-12-16
 
 ### The Compiled Dispatch Release

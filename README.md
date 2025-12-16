@@ -11,17 +11,19 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
-## What's New in v0.5.3
+## What's New in v0.5.4
 
-**The Compiled Dispatch Release** - Three mesas of capability:
+**The Temporal Tiles Release** - Four mesas of capability:
 
 | Mesa | Capability | What It Enables |
 |------|------------|-----------------|
 | **Mesa 1** | Discovery | Tiles specialize without supervision (92% purity on 6502 ops) |
 | **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
 | **Mesa 3** | Compilation | O(1) dispatch for known classes |
+| **Mesa 4** | Temporal Binding | State routing replaces attention (100% bracket counting) |
 
 ```python
+# Spatial routing (Mesa 1-3)
 from trix.nn import SparseLookupFFNv2, CompiledDispatch
 
 # Train with claim tracking
@@ -34,6 +36,14 @@ compiler.compile_stable(threshold=0.5)
 
 # Deploy with O(1) dispatch
 output, info, aux = compiler.forward(x, class_hint=0, confidence=0.9)
+
+# Temporal routing (Mesa 4)
+from trix.nn import TemporalTileLayer
+
+temporal = TemporalTileLayer(d_model=32, d_state=16, num_tiles=8)
+state = temporal.init_state(batch_size=4)
+output, final_state, infos = temporal.forward_sequence(x)
+# Tiles learn state transitions - the counter emerges from routing
 ```
 
 See [QUICKSTART.md](docs/QUICKSTART.md) for the full tutorial.
@@ -134,8 +144,9 @@ No learned router, no router params — just structure. ([GitHub][1])
 
 | Component               | Use case                                                  |
 | ----------------------- | --------------------------------------------------------- |
-| `SparseLookupFFNv2`     | **v0.5.3:** Surgery, claim tracking, regularizers |
-| `CompiledDispatch`      | **v0.5.3:** Path compilation for O(1) dispatch |
+| `TemporalTileLayer`     | **v0.5.4:** State routing for temporal binding |
+| `SparseLookupFFNv2`     | Surgery, claim tracking, regularizers |
+| `CompiledDispatch`      | Path compilation for O(1) dispatch |
 | `SparseLookupFFN`       | Routing IS computation, 2.3× smaller |
 | `HierarchicalTriXFFN`   | FFN with hierarchical routing                             |
 | `HierarchicalTriXBlock` | Full transformer block                                    |
@@ -175,7 +186,7 @@ src/trix/
   nn/              # modules (SparseLookup / hierarchical / sparse / classic)
   kernel/          # 2-bit kernel with ARM NEON
   qat/             # quantization-aware training
-tests/             # 242 tests
+tests/             # 268 tests
 examples/          # usage examples
 scripts/           # benchmark and validation scripts
 notes/             # design exploration and process docs
