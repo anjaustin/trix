@@ -4,6 +4,72 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.7.2] - 2025-12-16
+
+### The Transform Compilation Release
+
+**Core achievement:** *True compiled DFT. No runtime trig. Twiddles become opcodes.*
+
+This release adds transform compilation to TriX - proving the pattern works for spectral computation.
+
+### Added
+
+#### Walsh-Hadamard Transform (WHT)
+- XOR-based pairing structure compiled to FP4
+- IS_UPPER, PARTNER circuits at 100%
+- Self-inverse property verified
+- N=8, 16, 32 all exact
+
+#### Discrete Fourier Transform (DFT)
+- Twiddle opcodes (no `np.cos`, `np.sin` at runtime)
+- 8 fixed microcode opcodes for N=8
+- Structural routing: `tw_idx = j * (N // m)`
+- **0.00 error** vs NumPy for N=8
+
+#### Verification Guards
+- `verify_no_runtime_trig()` - fails if trig detected
+- Opcode coverage tracking
+
+### The Discovery
+
+We discovered our XOR-based "FFT" was actually **Walsh-Hadamard Transform**:
+
+```
+partner = pos XOR 2^stage  →  WHT (not DFT!)
+```
+
+This wasn't a bug - it was a revelation about what the structure computes.
+
+### Key Insight (VGem)
+
+> "No runtime math. Twiddles become opcodes. Routing selects them."
+
+The fix was clean:
+```python
+# Before: wm = np.cos(-2*pi/m)  # Runtime computation
+# After:  wt = TWIDDLE_OPS[k](t_re, t_im)  # Fixed microcode
+```
+
+### Results
+
+| Transform | N | Accuracy |
+|-----------|---|----------|
+| WHT | 8, 16, 32 | **100% exact** |
+| DFT | 8 | **0.00 error** |
+| DFT | 16 | ~2e-15 |
+
+### Documentation
+
+- `docs/FFT_COMPILATION.md` - Transform compilation guide
+- `docs/TWIDDLE_OPCODES.md` - Twiddle opcode details
+- `docs/RESEARCH_SUMMARY.md` - Research overview
+
+### The Punchline
+
+> "TriX compiles DFT/FFT control and executes spectral rotation via fixed twiddle microcode. No runtime trig."
+
+---
+
 ## [0.7.1] - 2025-12-16
 
 ### The FP4 Release
