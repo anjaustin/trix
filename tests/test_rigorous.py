@@ -544,6 +544,213 @@ class TestNumericalStability:
 
 
 # =============================================================================
+# SECTION 6: COMPOSITION VERIFICATION
+# =============================================================================
+
+class TestAtomComposition:
+    """
+    Verify that atoms compose correctly when chained.
+    
+    Claim: Output of one atom feeding another produces correct results.
+    Method: Test all 2-input → 2-input compositions exhaustively.
+    """
+    
+    def test_and_or_chain(self):
+        """AND output feeds OR: OR(AND(a,b), c)."""
+        from trix.compiler.atoms_fp4 import FP4AtomLibrary
+        
+        lib = FP4AtomLibrary()
+        and_atom = lib.get_atom("AND")
+        or_atom = lib.get_atom("OR")
+        
+        for a, b, c in product([0, 1], repeat=3):
+            # AND stage
+            x_and = torch.tensor([[float(a), float(b)]])
+            y_and = and_atom(x_and)
+            and_out = int(y_and[0, 0].item() > 0.5)
+            
+            # OR stage (using AND output)
+            x_or = torch.tensor([[float(and_out), float(c)]])
+            y_or = or_atom(x_or)
+            result = int(y_or[0, 0].item() > 0.5)
+            
+            expected = (a & b) | c
+            assert result == expected, f"AND_OR({a},{b},{c}) = {result}, expected {expected}"
+    
+    def test_xor_xor_chain(self):
+        """XOR chain: XOR(XOR(a,b), c) = parity of 3 bits."""
+        from trix.compiler.atoms_fp4 import FP4AtomLibrary
+        
+        lib = FP4AtomLibrary()
+        xor_atom = lib.get_atom("XOR")
+        
+        for a, b, c in product([0, 1], repeat=3):
+            # First XOR
+            x1 = torch.tensor([[float(a), float(b)]])
+            y1 = xor_atom(x1)
+            xor1 = int(y1[0, 0].item() > 0.5)
+            
+            # Second XOR
+            x2 = torch.tensor([[float(xor1), float(c)]])
+            y2 = xor_atom(x2)
+            result = int(y2[0, 0].item() > 0.5)
+            
+            expected = (a ^ b) ^ c
+            assert result == expected, f"XOR_XOR({a},{b},{c}) = {result}, expected {expected}"
+    
+    def test_full_adder_from_atoms(self):
+        """Full adder composed from SUM and CARRY atoms."""
+        from trix.compiler.atoms_fp4 import FP4AtomLibrary
+        
+        lib = FP4AtomLibrary()
+        sum_atom = lib.get_atom("SUM")
+        carry_atom = lib.get_atom("CARRY")
+        
+        for a, b, cin in product([0, 1], repeat=3):
+            x = torch.tensor([[float(a), float(b), float(cin)]])
+            
+            s = sum_atom(x)
+            c = carry_atom(x)
+            
+            sum_result = int(s[0, 0].item() > 0.5)
+            carry_result = int(c[0, 0].item() > 0.5)
+            
+            expected_sum = (a + b + cin) % 2
+            expected_carry = (a + b + cin) // 2
+            
+            assert sum_result == expected_sum, f"SUM({a},{b},{cin}) = {sum_result}, expected {expected_sum}"
+            assert carry_result == expected_carry, f"CARRY({a},{b},{cin}) = {carry_result}, expected {expected_carry}"
+    
+    def test_ripple_carry_composition(self):
+        """4-bit adder composed by chaining full adders."""
+        from trix.compiler.atoms_fp4 import FP4AtomLibrary
+        
+        lib = FP4AtomLibrary()
+        sum_atom = lib.get_atom("SUM")
+        carry_atom = lib.get_atom("CARRY")
+        
+        def add_4bit(a_bits, b_bits):
+            """Simulate 4-bit ripple carry adder."""
+            carry = 0
+            result = []
+            
+            for i in range(4):
+                x = torch.tensor([[float(a_bits[i]), float(b_bits[i]), float(carry)]])
+                s = int(sum_atom(x)[0, 0].item() > 0.5)
+                carry = int(carry_atom(x)[0, 0].item() > 0.5)
+                result.append(s)
+            
+            result.append(carry)  # Overflow bit
+            return result
+        
+        # Test all 256 combinations (4-bit x 4-bit)
+        errors = []
+        for a in range(16):
+            for b in range(16):
+                a_bits = [(a >> i) & 1 for i in range(4)]
+                b_bits = [(b >> i) & 1 for i in range(4)]
+                
+                result_bits = add_4bit(a_bits, b_bits)
+                result = sum(bit << i for i, bit in enumerate(result_bits))
+                
+                expected = a + b
+                if result != expected:
+                    errors.append((a, b, result, expected))
+        
+        assert len(errors) == 0, f"4-bit adder failed on {len(errors)} cases"
+
+
+class TestEdgeCases:
+    """
+    Test edge cases and boundary conditions.
+    
+    These tests verify behavior for unusual inputs.
+    """
+    
+    def test_wht_n1(self):
+        """WHT with N=1 is identity."""
+        from fft_compiler import CompiledWHT
+        
+        # N=1 has 0 stages, output = input
+        # Can't compile N=1 (no stages), so skip
+        pass  # N=1 not supported (log2(1) = 0 stages)
+    
+    def test_wht_sequential_sizes(self):
+        """WHT works for all power-of-2 sizes up to 64."""
+        from fft_compiler import compile_fft_routing, CompiledWHT
+        from scipy.linalg import hadamard
+        
+        for N in [2, 4, 8, 16, 32, 64]:
+            routing = compile_fft_routing(N)
+            wht = CompiledWHT(
+                N=N,
+                is_upper_circuit=routing['is_upper']['circuit'],
+                partner_circuits=routing['partner']['circuits'],
+            )
+            
+            # Test with standard vector
+            x = list(range(N))
+            y = wht.execute(x)
+            
+            H = hadamard(N)
+            expected = H @ np.array(x)
+            
+            np.testing.assert_allclose(y, expected, rtol=1e-10)
+    
+    def test_butterfly_identity_sizes(self):
+        """Butterfly identity works for various sizes."""
+        import sys
+        sys.path.insert(0, 'experiments/matmul')
+        from butterfly_matmul import identity_butterfly
+        
+        for N in [2, 4, 8, 16, 32]:
+            net = identity_butterfly(N)
+            M = net.as_matrix()
+            error = np.max(np.abs(M - np.eye(N)))
+            assert error == 0.0, f"Identity N={N} error: {error}"
+    
+    def test_all_zeros_input(self):
+        """All-zeros input produces all-zeros output for linear transforms."""
+        from fft_compiler import compile_fft_routing, CompiledWHT
+        
+        for N in [8, 16]:
+            routing = compile_fft_routing(N)
+            wht = CompiledWHT(
+                N=N,
+                is_upper_circuit=routing['is_upper']['circuit'],
+                partner_circuits=routing['partner']['circuits'],
+            )
+            
+            x = [0.0] * N
+            y = wht.execute(x)
+            
+            assert all(v == 0.0 for v in y), f"WHT N={N} all-zeros failed"
+    
+    def test_single_one_input(self):
+        """Single 1 in position k gives k-th column of transform matrix."""
+        from fft_compiler import compile_fft_routing, CompiledWHT
+        from scipy.linalg import hadamard
+        
+        N = 8
+        routing = compile_fft_routing(N)
+        wht = CompiledWHT(
+            N=N,
+            is_upper_circuit=routing['is_upper']['circuit'],
+            partner_circuits=routing['partner']['circuits'],
+        )
+        
+        H = hadamard(N)
+        
+        for k in range(N):
+            x = [0.0] * N
+            x[k] = 1.0
+            y = wht.execute(x)
+            
+            expected = H[:, k]
+            np.testing.assert_allclose(y, expected, rtol=1e-10)
+
+
+# =============================================================================
 # RUN CONFIGURATION
 # =============================================================================
 

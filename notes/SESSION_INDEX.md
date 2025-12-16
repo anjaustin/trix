@@ -191,4 +191,67 @@ For N=8, only 8 opcodes needed (algebraic constants like 1, -1, i, -i, sqrt(1/2)
 
 ---
 
-*Session continuing...*
+## Phase 4: Butterfly MatMul + Isomorphic Transformer (v0.7.3, v0.7.4)
+
+### Key Achievement
+
+**The Isomorphic Transformer is operational.**
+
+- Attention → SpectralMixer (WHT/FFT) O(N log N)
+- FFN → ButterflyMLP O(d log d)
+- No O(N²) operations anywhere
+
+### New Files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `experiments/matmul/butterfly_matmul.py` | ~700 | Butterfly MatMul implementation |
+| `experiments/isomorphic/isomorphic_transformer.py` | ~700 | Full Isomorphic Transformer |
+| `tests/test_butterfly_matmul.py` | ~150 | 16 MatMul tests |
+| `docs/BUTTERFLY_MATMUL.md` | ~200 | MatMul documentation |
+| `docs/ISOMORPHIC_TRANSFORMER.md` | ~200 | Transformer documentation |
+| `docs/TUTORIAL.md` | ~400 | Beginner tutorial |
+| `docs/GLOSSARY.md` | ~300 | 40+ terms defined |
+| `notes/matmul_1_raw.md` | ~100 | MatMul exploration (raw) |
+| `notes/matmul_2_exploration.md` | ~100 | MatMul exploration |
+| `notes/matmul_3_convergence.md` | ~100 | MatMul convergence |
+
+### Verified Results
+
+| Component | Status |
+|-----------|--------|
+| Butterfly Identity | 0.00 error |
+| Butterfly Hadamard | 0.00 error |
+| Hadamard = WHT | Exact match |
+| SpectralMixer | PASS |
+| ButterflyMLP | PASS |
+| Isomorphic Transformer | PASS |
+
+### Gap Closure
+
+All critical documentation gaps closed:
+- Exhaustive 8-bit adder (65,536 tests) ✓
+- Composition verification ✓
+- Beginner tutorial ✓
+- Glossary (40+ terms) ✓
+- Edge case tests ✓
+
+### Final Test Count
+
+**309 tests passing** across the full stack.
+
+---
+
+## The Unified Pattern
+
+```
+FFT:         Route → Twiddle → Route → Twiddle → ...
+MatMul:      Route → Block   → Route → Block   → ...
+Transformer: Route → Local   → Route → Local   → ...
+```
+
+Same structure. Different cartridges. One engine.
+
+---
+
+*Session complete. The Isomorphic Transformer is operational.*

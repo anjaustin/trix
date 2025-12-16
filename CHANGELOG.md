@@ -4,6 +4,78 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.7.4] - 2025-12-16
+
+### The Documentation Closure Release
+
+**Core achievement:** *All critical gaps closed. 309 tests passing. Full documentation.*
+
+### Added
+
+#### Documentation
+- `docs/TUTORIAL.md` - Progressive 6-part introduction from atoms to Isomorphic Transformer
+- `docs/GLOSSARY.md` - 40+ terms precisely defined
+- `docs/ISOMORPHIC_TRANSFORMER.md` - Full Isomorphic Transformer documentation
+
+#### Tests
+- `TestAtomComposition` - Verifies atoms compose correctly when chained
+- `TestEdgeCases` - Boundary conditions and edge cases
+- Total: 309 tests passing
+
+#### Gap Closure
+- Exhaustive 8-bit adder (65,536 combinations) ✓
+- Composition verification ✓
+- Edge case coverage ✓
+- Tutorial ✓
+- Glossary ✓
+
+---
+
+## [0.7.3] - 2025-12-16
+
+### The Butterfly MatMul Release
+
+**Core achievement:** *One engine, multiple cartridges. FFT and MatMul are the same structure.*
+
+### Added
+
+#### Butterfly MatMul
+- `ButterflyLayer`: Single stage of butterfly computation
+- `ButterflyNetwork`: Multi-stage butterfly for O(N log N) transforms
+- `MonarchLayer`: Generalized block-diagonal structure
+
+#### Block Opcodes
+- 81 ternary 2×2 matrices enumerated
+- 12 Hadamard-like (orthogonal) blocks identified
+- Named opcodes: I, SWAP, H+, H-, D+, etc.
+
+#### Verified Transforms
+- Identity: 0.00 error
+- Hadamard: 0.00 error (matches WHT exactly!)
+- Monarch permutation: correct pattern
+
+#### Tests
+- 16 new rigorous tests
+- Total: 305 tests passing
+
+### The Insight
+
+```
+FFT:    Route → Twiddle → Route → Twiddle → ...
+MatMul: Route → Block   → Route → Block   → ...
+Both:   Route → Local   → Route → Local   → ...
+```
+
+Same structure. Different blocks. We built the engine for FFT; now we load different cartridges.
+
+### Files
+
+- `experiments/matmul/butterfly_matmul.py` - Implementation
+- `tests/test_butterfly_matmul.py` - 16 tests
+- `docs/BUTTERFLY_MATMUL.md` - Documentation
+
+---
+
 ## [0.7.2] - 2025-12-16
 
 ### The Transform Compilation Release

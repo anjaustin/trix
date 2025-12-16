@@ -1,421 +1,346 @@
-# TriX Tutorial: From Zero to Compiled Transforms
+# TriX Tutorial: From Zero to Compiled Neural Computation
 
-**A gentle introduction for beginners.**
-
----
-
-## What You'll Learn
-
-By the end of this tutorial, you'll understand:
-1. What "compiled computation" means
-2. How to build exact boolean circuits
-3. How to compile a transform (WHT)
-4. Why this matters
-
-**Prerequisites:** Basic Python. That's it.
+**A progressive introduction for beginners.**
 
 ---
 
-## Part 1: The Big Idea
+## What is TriX?
 
-### Traditional Neural Networks
+TriX is a system for **compiled neural computation**. Instead of training neural networks and hoping they learn the right function, TriX:
 
-Traditional neural networks are **trained**:
-1. Start with random weights
-2. Show examples
-3. Adjust weights to reduce error
-4. Hope it generalizes
+1. **Constructs** exact atoms (tiny neural networks that compute boolean functions perfectly)
+2. **Composes** them into larger circuits
+3. **Verifies** correctness exhaustively
+4. **Compiles** everything to efficient representations
 
-The result is approximate. Close enough for many tasks, but never exact.
-
-### TriX: Compiled Computation
-
-TriX takes a different approach: **construction**.
-1. Know what function you want
-2. Design weights that compute it exactly
-3. Verify on all inputs
-4. Done
-
-The result is exact. Not "99.9% accurate" - actually correct.
-
-### Why This Matters
-
-Imagine you need to add two numbers. Would you:
-- (A) Train a neural network on millions of addition examples and hope it works?
-- (B) Build a circuit that adds correctly by design?
-
-TriX is approach (B).
+The result: neural networks that compute **exactly**, with mathematical guarantees.
 
 ---
 
-## Part 2: Your First Atom
+## Prerequisites
 
-An **atom** is the smallest unit of computation. Let's build one.
-
-### The AND Gate
-
-The AND gate outputs 1 only when both inputs are 1:
-
-```
-Inputs → Output
-(0, 0) → 0
-(0, 1) → 0
-(1, 0) → 0
-(1, 1) → 1
-```
-
-### Building AND with a Threshold Circuit
-
-A threshold circuit computes: `output = 1 if (w1*x1 + w2*x2 + b) > 0 else 0`
-
-For AND, we need:
-- `0 + 0 + b ≤ 0` (output 0)
-- `0 + w2 + b ≤ 0` (output 0)
-- `w1 + 0 + b ≤ 0` (output 0)
-- `w1 + w2 + b > 0` (output 1)
-
-Solution: `w1 = 1, w2 = 1, b = -1.5`
-
-Check:
-- `0 + 0 - 1.5 = -1.5 ≤ 0` ✓
-- `0 + 1 - 1.5 = -0.5 ≤ 0` ✓
-- `1 + 0 - 1.5 = -0.5 ≤ 0` ✓
-- `1 + 1 - 1.5 = 0.5 > 0` ✓
-
-**We didn't train this. We constructed it.**
-
-### Try It Yourself
-
-```python
-import torch
-
-def AND(x1, x2):
-    """AND gate as a threshold circuit."""
-    w1, w2, b = 1.0, 1.0, -1.5
-    z = w1 * x1 + w2 * x2 + b
-    return 1 if z > 0 else 0
-
-# Test all inputs
-for x1 in [0, 1]:
-    for x2 in [0, 1]:
-        print(f"AND({x1}, {x2}) = {AND(x1, x2)}")
-```
-
-Output:
-```
-AND(0, 0) = 0
-AND(0, 1) = 0
-AND(1, 0) = 0
-AND(1, 1) = 1
-```
+- Python 3.10+
+- Basic understanding of boolean logic (AND, OR, XOR)
+- Familiarity with NumPy arrays
+- No deep learning expertise required!
 
 ---
 
-## Part 3: Building an Adder
-
-Now let's build something useful: a 1-bit adder.
-
-### The Problem
-
-Add two bits (a, b) with a carry-in (cin). Produce sum and carry-out.
-
-```
-a + b + cin = (cout, sum)
-
-0 + 0 + 0 = (0, 0) = 0
-0 + 0 + 1 = (0, 1) = 1
-0 + 1 + 0 = (0, 1) = 1
-0 + 1 + 1 = (1, 0) = 2
-1 + 0 + 0 = (0, 1) = 1
-1 + 0 + 1 = (1, 0) = 2
-1 + 1 + 0 = (1, 0) = 2
-1 + 1 + 1 = (1, 1) = 3
-```
-
-### The Insight
-
-- **sum** = parity of inputs = (a XOR b XOR cin)
-- **cout** = majority of inputs = 1 if at least 2 inputs are 1
-
-### SUM Atom
-
-SUM outputs 1 when an odd number of inputs are 1:
-
-```python
-def SUM(a, b, cin):
-    """Sum bit: XOR of three inputs."""
-    # Two-layer threshold circuit
-    # Layer 1: detect different parities
-    # Layer 2: combine
-    
-    # Simplified: use XOR composition
-    return a ^ b ^ cin
-```
-
-In TriX, we construct this as a 2-layer threshold circuit.
-
-### CARRY Atom
-
-CARRY outputs 1 when at least 2 inputs are 1:
-
-```python
-def CARRY(a, b, cin):
-    """Carry bit: majority function."""
-    w1, w2, w3, b = 1.0, 1.0, 1.0, -1.5
-    z = w1 * a + w2 * b + w3 * cin + b
-    return 1 if z > 0 else 0
-```
-
-Check: threshold is 1.5, so need sum ≥ 2 to output 1. ✓
-
-### Try the Full Adder
-
-```python
-def full_adder(a, b, cin):
-    """1-bit full adder using atoms."""
-    s = SUM(a, b, cin)
-    cout = CARRY(a, b, cin)
-    return cout, s
-
-# Test all inputs
-for a in [0, 1]:
-    for b in [0, 1]:
-        for cin in [0, 1]:
-            cout, s = full_adder(a, b, cin)
-            value = a + b + cin
-            print(f"{a} + {b} + {cin} = ({cout}, {s}) = {cout*2 + s} [expected {value}]")
-```
-
-Output:
-```
-0 + 0 + 0 = (0, 0) = 0 [expected 0]
-0 + 0 + 1 = (0, 1) = 1 [expected 1]
-0 + 1 + 0 = (0, 1) = 1 [expected 1]
-0 + 1 + 1 = (1, 0) = 2 [expected 2]
-1 + 0 + 0 = (0, 1) = 1 [expected 1]
-1 + 0 + 1 = (1, 0) = 2 [expected 2]
-1 + 1 + 0 = (1, 0) = 2 [expected 2]
-1 + 1 + 1 = (1, 1) = 3 [expected 3]
-```
-
-**100% correct. No training. Just construction.**
-
----
-
-## Part 4: From Adder to Transform
-
-### The Walsh-Hadamard Transform
-
-The WHT is like addition, but for signal processing. It takes a list of numbers and transforms them.
-
-The basic operation is the **butterfly**:
-```
-(a, b) → (a + b, a - b)
-```
-
-A full WHT applies butterflies in stages, pairing different elements each time.
-
-### WHT for N=4
-
-```
-Input:  [x0, x1, x2, x3]
-
-Stage 0: Pair elements at distance 1
-  (x0, x1) → (x0+x1, x0-x1)
-  (x2, x3) → (x2+x3, x2-x3)
-  Result: [x0+x1, x0-x1, x2+x3, x2-x3]
-
-Stage 1: Pair elements at distance 2
-  (y0, y2) → (y0+y2, y0-y2)
-  (y1, y3) → (y1+y3, y1-y3)
-  Result: [y0+y2, y1+y3, y0-y2, y1-y3]
-```
-
-### The Pattern
-
-At stage s, pair elements at distance `2^s`. The partner of position i is `i XOR 2^s`.
-
-```python
-def partner(stage, pos):
-    return pos ^ (1 << stage)
-
-# Stage 0: distance 1
-partner(0, 0) = 0 ^ 1 = 1  # pair (0, 1)
-partner(0, 2) = 2 ^ 1 = 3  # pair (2, 3)
-
-# Stage 1: distance 2
-partner(1, 0) = 0 ^ 2 = 2  # pair (0, 2)
-partner(1, 1) = 1 ^ 2 = 3  # pair (1, 3)
-```
-
-### Simple WHT Implementation
-
-```python
-def wht(x):
-    """Walsh-Hadamard Transform."""
-    n = len(x)
-    result = list(x)
-    
-    stage = 0
-    while (1 << stage) < n:
-        new_result = result.copy()
-        distance = 1 << stage
-        
-        for i in range(n):
-            partner = i ^ distance
-            if i < partner:  # Process each pair once
-                a, b = result[i], result[partner]
-                new_result[i] = a + b
-                new_result[partner] = a - b
-        
-        result = new_result
-        stage += 1
-    
-    return result
-
-# Try it
-x = [1, 2, 3, 4]
-print(f"WHT({x}) = {wht(x)}")
-# Output: WHT([1, 2, 3, 4]) = [10, -2, -4, 0]
-```
-
-### What TriX Does
-
-TriX compiles this to FP4 threshold circuits:
-1. The partner selection (`i ^ distance`) becomes a circuit
-2. The "which gets sum vs diff" decision becomes a circuit
-3. The arithmetic (add, subtract) stays as microcode
-
-Result: A transform that's verified correct, uses minimal memory, and runs deterministically.
-
----
-
-## Part 5: Why "Compiled" Matters
-
-### Training vs Compilation
-
-| Aspect | Trained | Compiled |
-|--------|---------|----------|
-| Correctness | Approximate | Exact |
-| Verification | Statistical | Exhaustive |
-| Runtime | May vary | Deterministic |
-| Memory | Often large | Minimal |
-
-### The TriX Philosophy
-
-> "The routing learns WHEN. The atoms compute WHAT."
-
-- **Routing**: Which elements to pair, which operation to apply → structural, can be compiled
-- **Atoms**: The actual computation (add, XOR, etc.) → fixed microcode, exact
-
-When both are fixed, the entire computation is compiled. No decisions at runtime. No approximation. Just execution.
-
----
-
-## Part 6: Running the Real Code
-
-### Setup
+## Installation
 
 ```bash
-cd /workspace/trix_latest
+# Clone the repository
+git clone https://github.com/your-repo/trix.git
+cd trix
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Verify installation
+python -m pytest tests/ -v --tb=short
 ```
 
-### Test the Atoms
+---
+
+## Part 1: Understanding Atoms
+
+### What's an Atom?
+
+An **atom** is the smallest unit of computation in TriX. It's a tiny neural network (typically 1-2 layers) that computes a specific boolean function **exactly**.
+
+### Your First Atom: AND Gate
 
 ```python
 import sys
 sys.path.insert(0, 'src')
 
 from trix.compiler.atoms_fp4 import FP4AtomLibrary
+import torch
 
+# Get the atom library
 lib = FP4AtomLibrary()
 
-# Test AND
+# Get the AND atom
 and_atom = lib.get_atom("AND")
-print(f"AND atom: {and_atom.status}")
 
-# Test all inputs
-import torch
-for x1, x2 in [(0,0), (0,1), (1,0), (1,1)]:
-    inp = torch.tensor([[float(x1), float(x2)]])
-    out = and_atom.circuit(inp)
-    result = int(out[0,0].item() > 0.5)
-    print(f"AND({x1}, {x2}) = {result}")
+# Test it on all inputs
+print("AND Gate Truth Table:")
+for a in [0, 1]:
+    for b in [0, 1]:
+        x = torch.tensor([[float(a), float(b)]])
+        y = and_atom(x)
+        result = int(y[0, 0].item() > 0.5)
+        print(f"  AND({a}, {b}) = {result}")
 ```
 
-### Test the WHT
-
-```python
-import sys
-sys.path.insert(0, 'src')
-sys.path.insert(0, 'experiments/fft_atoms')
-
-from fft_compiler import test_compiled_wht
-
-# This compiles WHT routing to FP4 and tests it
-test_compiled_wht(8)
+Output:
+```
+AND Gate Truth Table:
+  AND(0, 0) = 0
+  AND(0, 1) = 0
+  AND(1, 0) = 0
+  AND(1, 1) = 1
 ```
 
-### Test the DFT
+### Available Atoms
+
+| Atom | Inputs | Function |
+|------|--------|----------|
+| AND | 2 | Output 1 iff both inputs are 1 |
+| OR | 2 | Output 1 iff at least one input is 1 |
+| XOR | 2 | Output 1 iff inputs differ |
+| NOT | 1 | Output inverse of input |
+| SUM | 3 | Output parity of 3 inputs (a ⊕ b ⊕ c) |
+| CARRY | 3 | Output 1 iff at least 2 inputs are 1 |
+| MUX | 3 | Output a if sel=0, else b |
+
+---
+
+## Part 2: Composing Atoms
+
+### Building a Full Adder
+
+A full adder adds three bits (a, b, carry_in) and produces a sum and carry_out.
 
 ```python
-from fft_compiler import test_compiled_complex_fft
+# Full adder from SUM and CARRY atoms
+sum_atom = lib.get_atom("SUM")
+carry_atom = lib.get_atom("CARRY")
 
-# This uses twiddle opcodes - no runtime trig!
-test_compiled_complex_fft(8)
+print("Full Adder Truth Table:")
+print("  a  b  cin | sum cout")
+print("  ----------|----------")
+
+for a in [0, 1]:
+    for b in [0, 1]:
+        for cin in [0, 1]:
+            x = torch.tensor([[float(a), float(b), float(cin)]])
+            s = int(sum_atom(x)[0, 0].item() > 0.5)
+            cout = int(carry_atom(x)[0, 0].item() > 0.5)
+            print(f"  {a}  {b}  {cin}   |  {s}    {cout}")
+```
+
+### Chaining: 4-Bit Adder
+
+```python
+def add_4bit(a: int, b: int) -> int:
+    """Add two 4-bit numbers using neural atoms."""
+    # Extract bits (LSB first)
+    a_bits = [(a >> i) & 1 for i in range(4)]
+    b_bits = [(b >> i) & 1 for i in range(4)]
+    
+    carry = 0
+    result_bits = []
+    
+    for i in range(4):
+        x = torch.tensor([[float(a_bits[i]), float(b_bits[i]), float(carry)]])
+        s = int(sum_atom(x)[0, 0].item() > 0.5)
+        carry = int(carry_atom(x)[0, 0].item() > 0.5)
+        result_bits.append(s)
+    
+    result_bits.append(carry)  # 5th bit for overflow
+    
+    # Convert back to integer
+    return sum(bit << i for i, bit in enumerate(result_bits))
+
+# Test
+print("\n4-Bit Addition:")
+print(f"  7 + 5 = {add_4bit(7, 5)}")
+print(f"  15 + 1 = {add_4bit(15, 1)}")
+print(f"  12 + 9 = {add_4bit(12, 9)}")
 ```
 
 ---
 
-## Part 7: What You've Learned
+## Part 3: The Compiler
 
-1. **Atoms** are exact boolean/arithmetic functions built by construction
-2. **Compilation** means all decisions are resolved before runtime
-3. **WHT** uses XOR-based partner selection (structural routing)
-4. **DFT** adds twiddle opcodes (fixed complex multiplies)
-5. **The pattern**: Structural routing + Fixed microcode = Verified computation
+### Using the TriX Compiler
+
+The compiler automates atom selection, wiring, and verification:
+
+```python
+from trix.compiler import TriXCompiler
+
+compiler = TriXCompiler(use_fp4=True)
+
+# Compile an 8-bit adder
+result = compiler.compile("adder_8bit")
+
+print(f"Compiled: {result.name}")
+print(f"Atoms used: {result.stats['total_atoms']}")
+print(f"Verified: {result.verified}")
+```
+
+### What the Compiler Does
+
+1. **Specification**: Parses circuit description
+2. **Decomposition**: Breaks into atoms and wiring
+3. **Verification**: Tests all input combinations
+4. **Emission**: Outputs optimized representation
+
+---
+
+## Part 4: Transform Compilation
+
+### Compiling the Walsh-Hadamard Transform
+
+TriX can compile signal processing transforms:
+
+```python
+sys.path.insert(0, 'experiments/fft_atoms')
+from fft_compiler import compile_fft_routing, CompiledWHT
+
+# Compile WHT for N=8
+N = 8
+routing = compile_fft_routing(N)
+
+wht = CompiledWHT(
+    N=N,
+    is_upper_circuit=routing['is_upper']['circuit'],
+    partner_circuits=routing['partner']['circuits'],
+)
+
+# Test it
+x = [1, 2, 3, 4, 5, 6, 7, 8]
+y = wht.execute(x)
+
+print(f"Input:  {x}")
+print(f"Output: {y}")
+
+# Verify against scipy
+from scipy.linalg import hadamard
+import numpy as np
+
+H = hadamard(N)
+expected = H @ np.array(x)
+print(f"Expected: {expected.tolist()}")
+print(f"Match: {np.allclose(y, expected)}")
+```
+
+### How It Works
+
+1. **Routing circuits** determine which elements to pair
+2. **Butterfly operations** apply 2×2 transforms to pairs
+3. **Stages** repeat log₂(N) times
+
+The routing is compiled to FP4 neural circuits!
+
+---
+
+## Part 5: Butterfly MatMul
+
+### Structured Matrix Multiplication
+
+The same structure that computes FFT can compute matrix operations:
+
+```python
+sys.path.insert(0, 'experiments/matmul')
+from butterfly_matmul import identity_butterfly, hadamard_butterfly
+
+# Identity matrix via butterfly
+N = 8
+net = identity_butterfly(N)
+M = net.as_matrix()
+
+print(f"Identity matrix error: {np.max(np.abs(M - np.eye(N)))}")
+
+# Hadamard matrix via butterfly
+net = hadamard_butterfly(N)
+M = net.as_matrix()
+
+from scipy.linalg import hadamard
+print(f"Hadamard matrix error: {np.max(np.abs(M - hadamard(N)))}")
+```
+
+### The Unified Pattern
+
+```
+FFT:    Route → Twiddle → Route → Twiddle → ...
+MatMul: Route → Block   → Route → Block   → ...
+Both:   Route → Local   → Route → Local   → ...
+```
+
+---
+
+## Part 6: The Isomorphic Transformer
+
+### Replacing the Entire Transformer
+
+TriX can replace both attention and MLP with structured operations:
+
+```python
+sys.path.insert(0, 'experiments/isomorphic')
+from isomorphic_transformer import IsomorphicTransformer
+
+# Create model
+model = IsomorphicTransformer(
+    vocab_size=100,
+    seq_len=8,
+    d_model=16,
+    n_layers=2,
+)
+
+# Forward pass
+import torch
+x = torch.randint(0, 100, (2, 8))  # batch=2, seq_len=8
+logits = model(x)
+
+print(f"Input shape: {x.shape}")
+print(f"Output shape: {logits.shape}")
+print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
+```
+
+### What Makes It "Isomorphic"?
+
+- **Attention** replaced by WHT/FFT (spectral mixing)
+- **FFN** replaced by Butterfly MLP (structured matmul)
+- **No O(N²) operations anywhere**
+- Same structure, different instantiations
+
+---
+
+## Summary: The TriX Stack
+
+```
+Level 6: Isomorphic Transformer
+         ↓
+Level 5: Butterfly MatMul
+         ↓
+Level 4: FFT/WHT Compilation
+         ↓
+Level 3: TriX Compiler
+         ↓
+Level 2: Atom Composition
+         ↓
+Level 1: FP4 Atoms (threshold circuits)
+```
+
+Each level builds on the one below. All verified. All exact.
+
+---
+
+## Running the Tests
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run specific test file
+python -m pytest tests/test_rigorous.py -v
+
+# Run with coverage
+python -m pytest tests/ --cov=src/trix
+```
 
 ---
 
 ## Next Steps
 
-- **Read the Glossary**: `docs/GLOSSARY.md`
-- **Run the Tests**: `pytest tests/test_rigorous.py -v`
-- **Study the Code**: `experiments/fft_atoms/fft_compiler.py`
-- **Read the Research Summary**: `docs/RESEARCH_SUMMARY.md`
+1. Read `docs/GLOSSARY.md` for terminology
+2. Explore `experiments/` for advanced examples
+3. Read `docs/FFT_COMPILATION.md` for transform details
+4. Check `CHANGELOG.md` for recent developments
 
 ---
 
-## Quick Reference
-
-```python
-# Import atoms
-from trix.compiler.atoms_fp4 import FP4AtomLibrary
-lib = FP4AtomLibrary()
-atom = lib.get_atom("AND")  # or OR, XOR, SUM, CARRY, etc.
-
-# Run atom
-import torch
-x = torch.tensor([[1.0, 0.0]])  # inputs
-y = atom.circuit(x)  # output
-result = int(y[0,0].item() > 0.5)
-
-# Import transforms
-from fft_compiler import compile_fft_routing, CompiledWHT
-
-# Compile WHT
-routing = compile_fft_routing(8)
-wht = CompiledWHT(
-    N=8,
-    is_upper_circuit=routing['is_upper']['circuit'],
-    partner_circuits=routing['partner']['circuits'],
-)
-
-# Run WHT
-result = wht.execute([1, 2, 3, 4, 5, 6, 7, 8])
-```
-
----
-
-*Welcome to compiled computation.*
+*Compiled neural computation. Exact results. Verified correctness.*
