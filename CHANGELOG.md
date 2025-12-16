@@ -4,6 +4,113 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.5.3] - 2024-12-16
+
+### The Compiled Dispatch Release
+
+**Core insight:** *Learning can emit code. Routing can be compiled.*
+
+This release completes Mesa 3: path compilation. TriX v2 now supports a full lifecycle from training to deployment with observable, editable, and compilable routing.
+
+### Added
+
+#### SparseLookupFFNv2 (Mesa 2: Partnership)
+- **Surgery API**: `insert_signature()`, `freeze_signature()`, `unfreeze_signature()`
+- **Claim Tracking**: See which classes route to which tiles during training
+- **Island Regularizers**: Ternary, sparsity, and diversity regularizers for signature quality
+- **Score Calibration Spline**: Learnable routing score calibration
+
+#### CompiledDispatch (Mesa 3: Compilation)
+- **Profile**: Analyze claim matrix to see what tiles learned
+- **Compile**: Freeze class→tile mappings for stable classes
+- **Execute**: O(1) dispatch for compiled classes, fallback to dynamic routing
+- **Monitor**: Track hit rate, detect drift, trigger recompilation
+- **Serialize**: Export/import dispatch tables as JSON
+
+#### A/B Harness
+- **`experiments/ab_harness_compiled.py`**: Compare dynamic vs compiled dispatch
+- Measures agreement rate, accuracy delta, compiled hit rate, worst disagreements
+- Validates compilation correctness (100% agreement achieved)
+
+#### Tests
+- **`tests/test_sparse_lookup_v2.py`**: 39 tests for surgery, regularizers, claim tracking
+- **`tests/test_compiled_dispatch.py`**: 21 tests for compilation lifecycle
+- **`tests/test_ab_harness.py`**: 9 tests for A/B comparison infrastructure
+- **Total: 242 tests** (all passing)
+
+#### Documentation
+- **`docs/QUICKSTART.md`**: New user on-ramp (zero to compiled dispatch in 10 min)
+- **`docs/SPARSE_LOOKUP_V2_API.md`**: Complete v2 API reference
+- **`docs/SESSION_SUMMARY_MESA_1_2_3.md`**: Full session documentation
+- **`docs/SEMANTIC_GEOMETRY_THESIS.md`**: Theoretical foundations
+
+#### 6502 Experiments
+- **92% tile purity** on 6502 operations without supervision
+- Tiles naturally specialize to operation categories (LOGIC, SHIFT, INCDEC)
+- Validates semantic geometry thesis
+
+### The Three Mesas
+
+| Mesa | Claim | Capability |
+|------|-------|------------|
+| **Mesa 1** | Routing IS computation | Tiles specialize without supervision |
+| **Mesa 2** | v2 enables partnership | Surgery, claim tracking, regularizers |
+| **Mesa 3** | Paths can be compiled | O(1) dispatch for known classes |
+
+### Key Results
+
+#### A/B Harness (Dynamic vs Compiled)
+| Metric | Value |
+|--------|-------|
+| Agreement rate | 100.0% |
+| Accuracy delta | +0.0% |
+| Compiled hit rate | 12.5%* |
+
+*Only 1/8 classes compilable with 30 epochs training. More training → more compilable.
+
+#### Island Statistics (v2 Regularizers)
+| Metric | Value |
+|--------|-------|
+| Ternary fraction | 100% |
+| Sparsity | 69% |
+| Diversity | 0.99 |
+
+### Migration
+
+```python
+# v0.4.0 (SparseLookupFFN)
+from trix import SparseLookupFFN
+ffn = SparseLookupFFN(d_model=512, num_tiles=64)
+
+# v0.5.3 (SparseLookupFFNv2 + CompiledDispatch)
+from trix.nn import SparseLookupFFNv2, CompiledDispatch
+
+ffn = SparseLookupFFNv2(
+    d_model=512,
+    num_tiles=64,
+    ternary_weight=0.01,
+    sparsity_weight=0.01,
+)
+
+# Train with claim tracking
+output, info, aux = ffn(x, labels=class_labels)
+
+# Compile
+compiler = CompiledDispatch(ffn)
+compiler.compile_stable(threshold=0.5)
+
+# Deploy
+output, info, aux = compiler.forward(x, class_hint=0, confidence=0.9)
+```
+
+### Philosophy
+
+> *"You turned a neural network from a thing that behaves into a thing that can be operated."*
+
+The dispatch table is a CONTRACT, not a cache. Readable, versionable, diffable, deployable. Git for learned routing.
+
+---
+
 ## [0.4.0] - 2024-12-15
 
 ### The SparseLookup Release

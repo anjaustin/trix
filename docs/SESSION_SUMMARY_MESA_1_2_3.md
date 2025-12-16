@@ -43,10 +43,11 @@ This session established three foundational "mesas" (plateaus) for TriX developm
 ### Test Coverage
 
 ```
-Total tests: 233
+Total tests: 242
 ├── Original TriX:     173
 ├── SparseLookupFFNv2:  39
-└── CompiledDispatch:   21
+├── CompiledDispatch:   21
+└── A/B Harness:         9
 
 All passing.
 ```
@@ -204,6 +205,23 @@ Regularizers improve signature quality without hurting task accuracy.
 | Monitoring | ✓ Hit rate, drift detection |
 | Serialization | ✓ Export/import JSON |
 
+### A/B Harness (Dynamic vs Compiled)
+
+| Metric | Value | Meaning |
+|--------|-------|---------|
+| Agreement rate | 100.0% | Compiled = Dynamic (identical outputs) |
+| Compiled hit rate | 12.5% | 1/8 classes compilable (LSR only) |
+| Accuracy delta | +0.0% | No degradation from compilation |
+| Disagreements | 0 | Zero divergence |
+
+**Verdict: PASS** - CompiledDispatch is correct and safe.
+
+**Why only 12.5% hit rate?**
+- Model trained 30 epochs (undertrained)
+- Tiles are specializing but not yet dedicated
+- Only LSR crossed the 0.4 compilability threshold
+- More training → more stable tiles → higher hit rate
+
 ---
 
 ## The Three Mesas
@@ -346,6 +364,7 @@ src/trix/nn/routed_memory.py          # Attention prototype
 ```
 tests/test_sparse_lookup_v2.py        # 39 tests
 tests/test_compiled_dispatch.py       # 21 tests
+tests/test_ab_harness.py              # 9 tests
 ```
 
 ### Experiments
@@ -363,10 +382,12 @@ experiments/trix_6502_proper_data.py
 experiments/benchmark_v2_rigorous.py
 experiments/benchmark_v2_tinyshakespeare.py
 experiments/attention_replacement_test.py
+experiments/ab_harness_compiled.py        # A/B comparison: dynamic vs compiled
 ```
 
 ### Documentation
 ```
+docs/QUICKSTART.md                    # New user on-ramp (start here!)
 docs/SPARSE_LOOKUP_V2_API.md          # v2 API reference
 docs/SEMANTIC_GEOMETRY_THESIS.md      # Thesis document
 docs/SESSION_SUMMARY_MESA_1_2_3.md    # This document

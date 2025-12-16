@@ -246,6 +246,7 @@ class CompiledDispatch(nn.Module):
             aux_losses: Auxiliary losses from FFN
         """
         # Check if we can use compiled path
+        guard_failed = False
         if class_hint is not None and class_hint in self.dispatch:
             entry = self.dispatch[class_hint]
             
@@ -260,13 +261,18 @@ class CompiledDispatch(nn.Module):
                 
                 return output, routing_info, aux_losses
             else:
-                # Guard failed
+                # Guard failed - will use dynamic but track as miss
                 self.compiled_misses += 1
+                guard_failed = True
         
-        # DYNAMIC EXECUTION
-        self.dynamic_calls += 1
+        # DYNAMIC EXECUTION (either no compiled path or guard failed)
+        if not guard_failed:
+            # Only count as dynamic if we didn't have a compiled path at all
+            self.dynamic_calls += 1
+        
         output, routing_info, aux_losses = self.ffn(x, labels=labels)
         routing_info['compiled'] = False
+        routing_info['guard_failed'] = guard_failed
         
         return output, routing_info, aux_losses
     

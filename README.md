@@ -11,6 +11,33 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
+## What's New in v0.5.3
+
+**The Compiled Dispatch Release** - Three mesas of capability:
+
+| Mesa | Capability | What It Enables |
+|------|------------|-----------------|
+| **Mesa 1** | Discovery | Tiles specialize without supervision (92% purity on 6502 ops) |
+| **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
+| **Mesa 3** | Compilation | O(1) dispatch for known classes |
+
+```python
+from trix.nn import SparseLookupFFNv2, CompiledDispatch
+
+# Train with claim tracking
+ffn = SparseLookupFFNv2(d_model=128, num_tiles=16, ternary_weight=0.01)
+output, info, aux = ffn(x, labels=class_labels)
+
+# Compile stable classes
+compiler = CompiledDispatch(ffn)
+compiler.compile_stable(threshold=0.5)
+
+# Deploy with O(1) dispatch
+output, info, aux = compiler.forward(x, class_hint=0, confidence=0.9)
+```
+
+See [QUICKSTART.md](docs/QUICKSTART.md) for the full tutorial.
+
 ## Status / Hardware support
 
 - ✅ **Tested:** Jetson AGX Thor (current dev target) 
@@ -107,7 +134,9 @@ No learned router, no router params — just structure. ([GitHub][1])
 
 | Component               | Use case                                                  |
 | ----------------------- | --------------------------------------------------------- |
-| `SparseLookupFFN`       | **NEW:** Routing IS computation, 2.3× smaller (recommended) |
+| `SparseLookupFFNv2`     | **v0.5.3:** Surgery, claim tracking, regularizers |
+| `CompiledDispatch`      | **v0.5.3:** Path compilation for O(1) dispatch |
+| `SparseLookupFFN`       | Routing IS computation, 2.3× smaller |
 | `HierarchicalTriXFFN`   | FFN with hierarchical routing                             |
 | `HierarchicalTriXBlock` | Full transformer block                                    |
 | `SparseTriXFFN`         | Simple 4-tile FFN                                         |
@@ -146,7 +175,7 @@ src/trix/
   nn/              # modules (SparseLookup / hierarchical / sparse / classic)
   kernel/          # 2-bit kernel with ARM NEON
   qat/             # quantization-aware training
-tests/             # 168 tests
+tests/             # 242 tests
 examples/          # usage examples
 scripts/           # benchmark and validation scripts
 notes/             # design exploration and process docs
