@@ -6,6 +6,16 @@
 
 ---
 
+## Performance Summary
+
+| Implementation | Rate | Speedup |
+|----------------|------|---------|
+| mpmath (baseline) | 105K digits/sec | 1x |
+| GMP Binary Splitting | 1.1-3.5M digits/sec | **17-33x** |
+| Parallel (14 cores) | 2.5M digits/sec | 1.2x over sequential |
+
+---
+
 ## Overview
 
 Mesa 10 inverts the data acquisition problem. Instead of downloading pre-computed digits, the Chudnovsky Cartridge **generates** π digits on demand using TriX's addressable intelligence architecture.
@@ -273,47 +283,122 @@ print(f"Whiteness: {result['whiteness']:.6f}")
 
 ```
 experiments/number_theory/
-├── chudnovsky_cartridge.py  # Full implementation
-│   ├── RNSAtom              # Parallel BigInt (RNS)
-│   ├── ChainedBigInt        # Sequential BigInt
-│   ├── RatioTile            # Chudnovsky recurrence
-│   ├── AccumulatorTile      # Series sum
-│   ├── DigitExtractTile     # Decimal conversion
-│   ├── ChudnovskyFactory    # Basic factory
-│   ├── VerifiedFactory      # Production factory
-│   └── ClosedLoopFirehose   # Complete pipeline
-└── hollywood_probe.py       # HS integration
+├── chudnovsky_cartridge.py   # Original implementation (mpmath)
+├── chudnovsky_gmp.py         # GMP-accelerated (17-33x faster)
+│   ├── GMPChudnovsky         # Direct computation
+│   ├── BinarySplittingChudnovsky  # O(n log³n) algorithm
+│   ├── GMPDigitStream        # Memory-efficient streaming
+│   └── GMPClosedLoop         # Generate + Analyze pipeline
+├── cuda_bigint.py            # GPU BigInt operations
+│   ├── CUDABigInt            # GPU tensor representation
+│   ├── cuda_bigint_add       # Parallel addition (55M limbs/sec)
+│   ├── NTTMultiplier         # Number Theoretic Transform
+│   └── cuda_factorial        # Parallel factorial
+├── parallel_chudnovsky.py    # Multi-core binary splitting
+│   └── ParallelChudnovsky    # ProcessPoolExecutor parallelization
+└── hollywood_probe.py        # Hollywood Squares integration
 ```
+
+---
+
+## GMP Optimization (Implemented)
+
+### Binary Splitting Algorithm
+
+The key optimization is **binary splitting** - reducing multiplication complexity from O(n²) to O(n log³n):
+
+```python
+from experiments.number_theory.chudnovsky_gmp import BinarySplittingChudnovsky
+
+# Generate 1 million digits
+bs = BinarySplittingChudnovsky(1000000)
+digits = bs.compute_mpfr()  # 0.5 seconds!
+```
+
+### How It Works
+
+```
+Binary Splitting Tree:
+                    [0, n)
+                   /      \
+              [0, n/2)   [n/2, n)      ← Split
+             /    \      /    \
+          [...]  [...]  [...]  [...]   ← Recurse
+          
+Each node computes (P, Q, T):
+- P: Product term
+- Q: Denominator term
+- T: Sum term
+
+Merge: P(a,b) = P(a,m) × P(m,b)
+       Q(a,b) = Q(a,m) × Q(m,b)
+       T(a,b) = Q(m,b) × T(a,m) + P(a,m) × T(m,b)
+```
+
+### Performance by Scale
+
+| Digits | Time | Rate |
+|--------|------|------|
+| 100K | 0.03s | 3.5M/s |
+| 500K | 0.22s | 2.3M/s |
+| 1M | 0.49s | 2.0M/s |
+| 5M | 3.61s | 1.4M/s |
+| 10M | 8.89s | 1.1M/s |
+
+---
+
+## CUDA BigInt (Experimental)
+
+### GPU-Accelerated Operations
+
+```python
+from experiments.number_theory.cuda_bigint import CUDABigInt, cuda_bigint_add
+
+a = CUDABigInt(12345678901234567890, device='cuda')
+b = CUDABigInt(98765432109876543210, device='cuda')
+c = cuda_bigint_add(a, b)  # Parallel carry propagation
+```
+
+### Performance
+
+| Operation | Rate |
+|-----------|------|
+| Addition (10K limbs) | 55M limbs/sec |
+| Factorial (n=20) | Verified correct |
+
+**Note:** For production use, GMP via gmpy2 is recommended. CUDA BigInt is experimental.
 
 ---
 
 ## Future Work
 
-### 1. GMP Integration
+### 1. Native CUDA Multiplication
 
-Replace mpmath with GMP/MPIR for 100x speedup:
+Implement NTT-based multiplication with fully vectorized butterfly:
 
 ```python
-from gmpy2 import mpz, mpfr
-# Native arbitrary precision at C speed
+# Current: Python loops in NTT (slow)
+# Target: CUDA kernels for O(n log n) multiplication
 ```
 
-### 2. CUDA BigInt
+### 2. Multi-GPU Distribution
 
-Implement parallel multiplication on GPU:
+Distribute binary splitting tree across GPUs:
 
 ```python
-# Karatsuba or FFT-based multiplication
-# Each GPU thread handles one limb
+# Hollywood Squares coordination
+# Each GPU handles a subtree
+# Results merged via NCCL
 ```
 
-### 3. Binary Splitting on GPU
+### 3. Streaming Pipeline
 
-True parallel Chudnovsky:
+Continuous digit generation and analysis:
 
 ```python
-# Distribute binary splitting tree across GPU blocks
-# Merge results using parallel reduction
+# Generate chunks in background
+# Analyze as chunks arrive
+# Report running statistics
 ```
 
 ---

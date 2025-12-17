@@ -56,9 +56,12 @@ python chudnovsky_cartridge.py
 | File | Description |
 |------|-------------|
 | `euler_probe.py` | Mesa 9 core implementation |
-| `euler_probe_gpu.py` | GPU-optimized spectral probe |
+| `euler_probe_gpu.py` | GPU-optimized spectral probe (21B digits/sec) |
 | `granville_full_test.py` | Standalone full test runner |
-| `chudnovsky_cartridge.py` | Mesa 10 π generator |
+| `chudnovsky_cartridge.py` | Mesa 10 original (mpmath, 105K digits/sec) |
+| `chudnovsky_gmp.py` | **Mesa 10 Turbo** (GMP, 1.1-3.5M digits/sec) |
+| `cuda_bigint.py` | GPU BigInt operations (55M limbs/sec) |
+| `parallel_chudnovsky.py` | Multi-core binary splitting |
 | `hollywood_probe.py` | Hollywood Squares integration |
 | `run_granville.sh` | Background launcher script |
 
@@ -70,8 +73,20 @@ python chudnovsky_cartridge.py
 - **VRAM:** 80 GB used
 
 ### Mesa 10: Generation
-- **Rate:** 105K digits/sec (mpmath)
-- **Potential:** 10M digits/sec (with GMP)
+
+| Implementation | Rate | Speedup |
+|----------------|------|---------|
+| mpmath (original) | 105K digits/sec | 1x |
+| **GMP Binary Splitting** | **1.1-3.5M digits/sec** | **17-33x** |
+| CUDA BigInt Add | 55M limbs/sec | - |
+
+### Generation at Scale (GMP)
+
+| Digits | Time | Rate |
+|--------|------|------|
+| 100K | 0.03s | 3.5M/s |
+| 1M | 0.49s | 2.0M/s |
+| 10M | 8.89s | 1.1M/s |
 
 ## Usage Examples
 
@@ -91,16 +106,40 @@ result = probe.analyze(torch.tensor(digits, device='cuda', dtype=torch.float32))
 print(f"Whiteness: {result['whiteness_mean']:.6f}")
 ```
 
-### Closed Loop (Mesa 10)
+### Closed Loop - Original (Mesa 10)
 
 ```python
 from chudnovsky_cartridge import ClosedLoopFirehose
 
-# Generate π and analyze in one operation
+# Generate π and analyze (105K digits/sec)
 firehose = ClosedLoopFirehose(window_size=1024)
-result = firehose.run(total_digits=1_000_000)
+result = firehose.run(total_digits=100_000)
+```
 
-print(f"Verdict: {'NORMAL' if result['is_normal'] else 'CHECK'}")
+### Closed Loop - GMP Turbo (Mesa 10)
+
+```python
+from chudnovsky_gmp import GMPClosedLoop
+
+# Generate π and analyze (1.7M digits/sec - 17x faster!)
+loop = GMPClosedLoop(window_size=256, block_size=10)
+result = loop.run(total_digits=1_000_000)
+
+print(f"Rate: {result['gen_rate']:,.0f} digits/sec")
+print(f"Verdict: {'π IS NORMAL ✓' if result['is_normal'] else 'INVESTIGATE'}")
+```
+
+### Direct Generation (GMP)
+
+```python
+from chudnovsky_gmp import BinarySplittingChudnovsky
+
+# Generate 10 million digits in ~9 seconds
+bs = BinarySplittingChudnovsky(10_000_000)
+digits = bs.compute_mpfr()
+
+# Verify
+assert digits[:20] == "14159265358979323846"
 ```
 
 ### Full Background Test

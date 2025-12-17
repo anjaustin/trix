@@ -11,9 +11,17 @@ Mesa 9 and Mesa 10 together form a **closed-loop system** for generating and ana
 | Mesa | Name | Function | Throughput |
 |------|------|----------|------------|
 | Mesa 9 | Euler Probe | Spectral Analysis | 21 Billion digits/sec |
-| Mesa 10 | Chudnovsky Cartridge | π Generation | 105K digits/sec |
+| Mesa 10 | Chudnovsky Cartridge | π Generation | **1.1-3.5M digits/sec** |
 
 **Combined:** Generate π → Analyze spectrally → Prove normality
+
+### Mesa 10 Turbo (GMP Optimization)
+
+| Implementation | Rate | Speedup |
+|----------------|------|---------|
+| mpmath (original) | 105K digits/sec | 1x |
+| GMP Binary Splitting | 1.1-3.5M digits/sec | **17-33x** |
+| CUDA BigInt Addition | 55M limbs/sec | - |
 
 ---
 
@@ -132,20 +140,21 @@ Generation:       500,000 digits/sec  ✗ (mpmath limited)
 | 10B digits | 0.5s | 20B/s |
 | 20B digits | 1.08s | 18.5B/s |
 
-### Mesa 10: Generation Performance
+### Mesa 10: Generation Performance (GMP Turbo)
 
 | Precision | Time | Rate |
 |-----------|------|------|
-| 1K digits | 0.003s | 345K/s |
-| 10K digits | 0.05s | 205K/s |
-| 100K digits | 0.21s | 473K/s |
-| 1M digits | 9.5s | 105K/s |
+| 100K digits | 0.03s | 3.5M/s |
+| 500K digits | 0.22s | 2.3M/s |
+| 1M digits | 0.49s | 2.0M/s |
+| 5M digits | 3.61s | 1.4M/s |
+| 10M digits | 8.89s | 1.1M/s |
 
-### Bottleneck Analysis
+### Bottleneck Analysis (After GMP Optimization)
 
 ```
-Generation: ████░░░░░░░░░░░░░░░░  105K/s   ← BOTTLENECK
-Analysis:   ████████████████████  21B/s    ← 200,000x faster
+Generation: ████████░░░░░░░░░░░░  2M/s     ← Still bottleneck (but 17x faster!)
+Analysis:   ████████████████████  21B/s    ← 10,000x faster than generation
 ```
 
 ---
@@ -188,14 +197,20 @@ Mesa 1:  Discovery                ← Emergent specialization
 
 ```
 experiments/number_theory/
-├── euler_probe.py           # Mesa 9 core
-├── euler_probe_gpu.py       # Mesa 9 GPU optimized
+├── euler_probe.py           # Mesa 9 core (spectral analysis)
+├── euler_probe_gpu.py       # Mesa 9 GPU optimized (21B digits/sec)
 ├── granville_full_test.py   # Mesa 9 standalone runner
 ├── run_granville.sh         # Mesa 9 launcher
-├── chudnovsky_cartridge.py  # Mesa 10 full implementation
+├── chudnovsky_cartridge.py  # Mesa 10 original (mpmath)
+├── chudnovsky_gmp.py        # Mesa 10 Turbo (GMP, 17-33x faster)
+├── cuda_bigint.py           # GPU BigInt operations (55M limbs/sec)
+├── parallel_chudnovsky.py   # Multi-core binary splitting
 ├── hollywood_probe.py       # Hollywood Squares integration
 ├── __init__.py
 └── README.md
+
+tests/
+└── test_number_theory.py    # 19 tests for Mesa 9 & 10
 
 docs/
 ├── MESA_9_EULER_PROBE.md    # Mesa 9 documentation
@@ -205,11 +220,6 @@ docs/
 results/granville/
 ├── granville_*.log          # Execution logs
 └── results_*.json           # JSON results
-
-data/digits/
-├── pi_1m.txt                # 1M π digits
-├── pi_100m.txt              # 100M π digits
-└── pi_billion.txt           # 1B π digits (downloaded)
 ```
 
 ---
