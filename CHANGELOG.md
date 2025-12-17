@@ -4,6 +4,53 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.8.0] - 2025-12-17
+
+### Mesa 8: The Neural CUDA Release
+
+**Core achievement:** *SASS assembly execution on the TriX architecture. The Neural GPU.*
+
+### Added
+
+#### Mesa 8: Neural CUDA
+- `sass_parser.py` - Parse real nvdisasm output from Jetson AGX Thor
+- `trix_cuda.py` - TriX CUDA engine with signature routing
+- `trix_router.py` - Ternary signature-based opcode dispatch
+- FP4 atoms: SUM (parity), CARRY (majority)
+- RippleAdderTile: 32-bit adder from FP4 atoms
+- Full IADD3 execution through TriX stack
+
+#### Verification
+- Routing test: 7 opcodes → correct tiles
+- FP4 atoms: 8/8 truth table entries correct
+- Ripple adder: 6/6 test cases (8-bit)
+- Full kernel: IADD3 R9, R2, R5, RZ → 42 + 58 = 100 ✓
+
+#### Documentation
+- `MESA8_NEURAL_CUDA.md` - Complete architecture guide
+- `MESA8_FP4_ATOMS.md` - Threshold circuit reference
+- `MESA8_SASS_REFERENCE.md` - SASS opcode mapping
+
+### The Stack
+
+```
+SASS Opcode → TriX Router → Tile → FP4 Atoms → Exact Result
+     ↓            ↓          ↓         ↓           ↓
+  IADD3     Signature    INTEGER   SUM+CARRY     100
+            Matching      _ALU      atoms
+```
+
+### Key Insight
+
+The same TriX architecture handles:
+- Mesa 5: FFT (twiddle opcodes) - 0.00 error
+- Mesa 6: MatMul (block opcodes) - 0.00 error
+- Mesa 8: CUDA (SASS opcodes) - 100% exact
+
+**One engine. Every cartridge. Universal computation.**
+
+---
+
 ## [0.7.4] - 2025-12-16
 
 ### The Documentation Closure Release

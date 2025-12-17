@@ -1,0 +1,69 @@
+# Mesa 8: SASS Reference from Jetson AGX Thor
+# Architecture: sm_90 (Hopper)
+# CUDA: 13.0
+
+## Simple Add Kernel: *c = *a + *b
+
+_Z10add_kernelPiS_S_:
+    /*0000*/  LDC R1, c[0x0][0x28] ;           // Load stack pointer
+    /*0010*/  LDC.64 R2, c[0x0][0x210] ;       // Load pointer a (64-bit)
+    /*0020*/  ULDC.64 UR4, c[0x0][0x208] ;     // Load descriptor to uniform reg
+    /*0030*/  LDC.64 R4, c[0x0][0x218] ;       // Load pointer b (64-bit)
+    /*0040*/  LDG.E R2, desc[UR4][R2.64] ;     // Load *a → R2
+    /*0050*/  LDG.E R5, desc[UR4][R4.64] ;     // Load *b → R5
+    /*0060*/  LDC.64 R6, c[0x0][0x220] ;       // Load pointer c (64-bit)
+    /*0070*/  IADD3 R9, R2, R5, RZ ;           // R9 = R2 + R5 + 0  ← THE ADD!
+    /*0080*/  STG.E desc[UR4][R6.64], R9 ;     // Store *c = R9
+    /*0090*/  EXIT ;                            // Exit kernel
+
+## Vector Add Kernel: c[idx] = a[idx] + b[idx]
+
+_Z11vadd_kernelPiS_S_i:
+    /*0000*/  LDC R1, c[0x0][0x28] ;
+    /*0010*/  S2R R0, SR_TID.X ;               // Thread ID → R0
+    /*0020*/  S2UR UR4, SR_CTAID.X ;           // Block ID → UR4
+    /*0030*/  LDC R9, c[0x0][RZ] ;             // Load blockDim.x
+    /*0040*/  IMAD R9, R9, UR4, R0 ;           // idx = blockDim.x * blockIdx.x + threadIdx.x
+    /*0050*/  ULDC UR4, c[0x0][0x228] ;        // Load n
+    /*0060*/  ISETP.GE.AND P0, PT, R9, UR4, PT ; // P0 = (idx >= n)
+    /*0070*/  @P0 EXIT ;                       // if (idx >= n) exit
+    /*0080*/  LDC.64 R2, c[0x0][0x210] ;       // Load pointer a
+    /*0090*/  ULDC.64 UR4, c[0x0][0x208] ;     // Load descriptor
+    /*00a0*/  LDC.64 R4, c[0x0][0x218] ;       // Load pointer b
+    /*00b0*/  LDC.64 R6, c[0x0][0x220] ;       // Load pointer c
+    /*00c0*/  IMAD.WIDE R2, R9, 0x4, R2 ;      // R2 = &a[idx] (64-bit address)
+    /*00d0*/  LDG.E R3, desc[UR4][R2.64] ;     // Load a[idx] → R3
+    /*00e0*/  IMAD.WIDE R4, R9, 0x4, R4 ;      // R4 = &b[idx]
+    /*00f0*/  LDG.E R4, desc[UR4][R4.64] ;     // Load b[idx] → R4
+    /*0100*/  IMAD.WIDE R6, R9, 0x4, R6 ;      // R6 = &c[idx]
+    /*0110*/  IADD3 R9, R4, R3, RZ ;           // R9 = a[idx] + b[idx]  ← THE ADD!
+    /*0120*/  STG.E desc[UR4][R6.64], R9 ;     // Store c[idx] = R9
+    /*0130*/  EXIT ;
+
+## Key Opcode Categories
+
+### Integer ALU
+- IADD3 Rd, Ra, Rb, Rc    : Rd = Ra + Rb + Rc
+- IMAD Rd, Ra, Rb, Rc     : Rd = Ra * Rb + Rc (integer multiply-add)
+- IMAD.WIDE Rd, Ra, Rb, Rc: 64-bit result multiply-add
+
+### Memory
+- LDC Rd, c[bank][offset]  : Load constant memory
+- LDG.E Rd, desc[addr]     : Load global memory
+- STG.E desc[addr], Rs     : Store global memory
+- ULDC Rd, c[bank][offset] : Load constant to uniform register
+
+### Control
+- EXIT                     : Exit kernel
+- @Px INST                 : Predicated execution
+- ISETP.cmp P, Q, Ra, Rb   : Integer set predicate
+
+### System
+- S2R Rd, SR_xxx           : System register to register
+- S2UR URd, SR_xxx         : System register to uniform register
+
+## Register Classes
+- R0-R255    : General purpose registers (per-thread)
+- UR0-UR63   : Uniform registers (shared across warp)
+- P0-P6, PT  : Predicate registers
+- RZ         : Zero register (always 0)

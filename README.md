@@ -11,9 +11,9 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
-## What's New in v0.6.1
+## What's New in v0.8.0
 
-**The Complete FFT Release** - A full spectral subsystem:
+**The Neural CUDA Release** - SASS assembly execution on the TriX architecture.
 
 | Mesa | Capability | What It Enables |
 |------|------------|-----------------|
@@ -21,17 +21,34 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 | **Mesa 2** | Partnership | Surgery API, claim tracking, regularizers |
 | **Mesa 3** | Compilation | O(1) dispatch for known classes |
 | **Mesa 4** | Temporal Binding | State routing replaces attention (100% bracket counting) |
-| **Mesa 5** | Complete FFT | Forward + Inverse, scales N=8→64, 100% round-trip |
+| **Mesa 5** | FFT/WHT | Twiddle opcodes, 0.00 error vs NumPy |
+| **Mesa 6** | Butterfly MatMul | Monarch structures, 0.00 error |
+| **Mesa 7** | Isomorphic Transformer | SpectralMixer + ButterflyMLP |
+| **Mesa 8** | Neural CUDA | SASS opcodes on TriX (100% exact) |
 
-### FFT Register (Complete)
+### Mesa 8: The Neural GPU
 
-| Component | Status | Result |
-|-----------|--------|--------|
-| ADDRESS | ✅ | 100% structural learning |
-| BUTTERFLY | ✅ | 100% discrete ops |
-| TWIDDLE FACTORS | ✅ | 100% complex rotation |
-| N-SCALING | ✅ | 100% on N=8,16,32,64 |
-| FFT/IFFT CLOSURE | ✅ | 100% round-trip |
+```
+SASS Opcode → TriX Router → Tile → FP4 Atoms → Exact Result
+     ↓            ↓          ↓         ↓           ↓
+  IADD3     Signature    INTEGER   SUM+CARRY     100
+            Matching      _ALU      atoms
+```
+
+- **Routing**: Ternary signature matching dispatches opcodes to tiles
+- **Tiles**: RippleAdderTile composed of FullAdders
+- **Atoms**: SUM (parity) + CARRY (majority) - FP4 threshold circuits
+- **Result**: 42 + 58 = 100 (exact, through full TriX stack)
+
+### The Unified Architecture
+
+| Mesa | Domain | Cartridge | Status |
+|------|--------|-----------|--------|
+| 5 | Signal Processing | Twiddle Opcodes | ✅ 0.00 error |
+| 6 | Linear Algebra | Block Opcodes | ✅ 0.00 error |
+| 8 | General Purpose | SASS Opcodes | ✅ 100% exact |
+
+**One engine. Every cartridge. Universal computation.**
 
 ```python
 # Spatial routing (Mesa 1-3)

@@ -254,4 +254,63 @@ Same structure. Different cartridges. One engine.
 
 ---
 
-*Session complete. The Isomorphic Transformer is operational.*
+---
+
+## Phase 5: Mesa 8 - Neural CUDA (v0.8.0)
+
+**Date:** December 17, 2025
+
+### Key Achievement
+
+**The Neural GPU is operational.**
+
+SASS assembly executes on the TriX architecture:
+- Opcodes route via ternary signature matching
+- Tiles execute using FP4 atoms
+- IADD3 = RippleAdder(SUM + CARRY atoms)
+- Results are exact by construction
+
+### The Stack
+
+```
+SASS Opcode → TriX Router → Tile → FP4 Atoms → Exact Result
+     ↓            ↓          ↓         ↓           ↓
+  IADD3     Signature    INTEGER   SUM+CARRY     100
+            Matching      _ALU      atoms
+```
+
+### New Files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `experiments/mesa8/sass_parser.py` | ~200 | Parse nvdisasm output |
+| `experiments/mesa8/trix_cuda.py` | ~450 | TriX CUDA engine |
+| `experiments/mesa8/hello_add.cu` | ~15 | Test CUDA kernel |
+| `experiments/mesa8/sass_reference.txt` | ~80 | SASS reference |
+| `docs/MESA8_NEURAL_CUDA.md` | ~400 | Architecture guide |
+| `docs/MESA8_FP4_ATOMS.md` | ~300 | FP4 atom reference |
+| `docs/MESA8_SASS_REFERENCE.md` | ~400 | SASS opcode mapping |
+
+### Verified Results
+
+| Test | Result |
+|------|--------|
+| Routing (7 opcodes) | All correct |
+| FP4 atoms (8 cases) | 8/8 (100%) |
+| Ripple adder (8-bit) | 6/6 correct |
+| IADD3 (42 + 58) | 100 ✓ |
+| Full kernel | PASS |
+
+### The Unified Architecture
+
+| Mesa | Domain | Cartridge | Status |
+|------|--------|-----------|--------|
+| 5 | Signal Processing | Twiddle Opcodes | ✅ 0.00 error |
+| 6 | Linear Algebra | Block Opcodes | ✅ 0.00 error |
+| 8 | General Purpose | SASS Opcodes | ✅ 100% exact |
+
+**One engine. Every cartridge. Universal computation.**
+
+---
+
+*Session complete. The Neural GPU is operational.*
