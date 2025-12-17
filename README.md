@@ -1,4 +1,4 @@
-# TriX
+# TriX (Ternary Routing with Isomorphic eXecution)
 
 A 2-bit conditional ternary FFN for transformers with **learned computational sparsity** via **emergent routing**.
 > Core idea: **Don’t learn what you can read.**
