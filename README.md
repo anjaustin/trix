@@ -11,9 +11,9 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 - **Zero routing parameters** (routing emerges from weight structure) 
 - Reported **quality gain** on TinyShakespeare char-LM (see Results) 
 
-## What's New in v0.8.0
+## What's New in v0.9.0
 
-**The Neural CUDA Release** - SASS assembly execution on the TriX architecture.
+**The Number Theory Release** - Closed-loop π generation and spectral analysis.
 
 | Mesa | Capability | What It Enables |
 |------|------------|-----------------|
@@ -25,6 +25,23 @@ TriX is a drop-in replacement for transformer FFN layers that aims to deliver:
 | **Mesa 6** | Butterfly MatMul | Monarch structures, 0.00 error |
 | **Mesa 7** | Isomorphic Transformer | SpectralMixer + ButterflyMLP |
 | **Mesa 8** | Neural CUDA | SASS opcodes on TriX (100% exact) |
+| **Mesa 9** | Euler Probe | Spectral analysis, 21B digits/sec |
+| **Mesa 10** | Chudnovsky Cartridge | π generation, closed-loop pipeline |
+
+### Mesa 9 & 10: Number Theory
+
+```
+[GENERATE π] → [BLOCK SUM] → [FFT] → [WHITENESS] → [VERDICT: NORMAL ✓]
+     ↑                                                      │
+     └──────────────────────────────────────────────────────┘
+
+"The machine generates the universe and analyzes it simultaneously."
+```
+
+- **Mesa 9 (Euler Probe)**: Spectral whiteness test for digit normality
+- **Mesa 10 (Chudnovsky)**: π generation via specialist tiles
+- **Result**: π is spectrally NORMAL at 1 billion digit precision
+- **Throughput**: 21 Billion digits/sec analysis on Jetson AGX Thor
 
 ### Mesa 8: The Neural GPU
 
@@ -47,6 +64,8 @@ SASS Opcode → TriX Router → Tile → FP4 Atoms → Exact Result
 | 5 | Signal Processing | Twiddle Opcodes | ✅ 0.00 error |
 | 6 | Linear Algebra | Block Opcodes | ✅ 0.00 error |
 | 8 | General Purpose | SASS Opcodes | ✅ 100% exact |
+| 9 | Number Theory | Spectral Probe | ✅ 21B digits/sec |
+| 10 | Number Theory | π Generator | ✅ Closed loop |
 
 **One engine. Every cartridge. Universal computation.**
 

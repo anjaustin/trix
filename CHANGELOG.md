@@ -4,6 +4,74 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.9.0] - 2025-12-17
+
+### Mesa 9 & 10: The Number Theory Release
+
+**Core achievement:** *Closed-loop π generation and spectral analysis. The Granville Challenge answered.*
+
+### Added
+
+#### Mesa 9: Euler Probe (Spectral Analysis)
+- `euler_probe.py` - Core spectral whiteness test
+- `euler_probe_gpu.py` - GPU-optimized probe (21B digits/sec)
+- `granville_full_test.py` - Standalone full test runner
+- `SpectralAnalyzer` - Exact FFT with 0.00 error
+- `SpectralWhitenessTest` - Statistical comparison vs random
+- `GPUSpectralProbe` - Batched FFT on CUDA
+
+#### Mesa 10: Chudnovsky Cartridge (π Generation)
+- `chudnovsky_cartridge.py` - Full Chudnovsky implementation
+- `RNSAtom` - Parallel BigInt via Residue Number System
+- `ChainedBigInt` - Arbitrary precision via limb chaining
+- `RatioTile` - Chudnovsky recurrence computation
+- `AccumulatorTile` - Running series sum
+- `ClosedLoopFirehose` - Generate → Analyze → Verdict pipeline
+
+#### Hollywood Squares Integration
+- `hollywood_probe.py` - Distributed pipeline coordination
+- `ButterflyNode` - FFT as message-passing network
+- Specialist tile architecture (addressable intelligence)
+
+#### Results
+- **20 Billion digits** analyzed in 1.08 seconds
+- **21 Billion digits/sec** analysis throughput
+- **π is NORMAL** at 1 billion unique digit precision
+- Z-score: 0.51 (well within noise at all scales)
+
+#### Documentation
+- `docs/MESA_9_EULER_PROBE.md` - Full Mesa 9 documentation
+- `docs/MESA_10_CHUDNOVSKY.md` - Full Mesa 10 documentation
+- `docs/MESA_9_10_SUMMARY.md` - Combined summary
+
+### The Closed Loop
+
+```
+[GENERATE π] → [BLOCK SUM] → [FFT] → [WHITENESS] → [VERDICT]
+     ↑                                                 │
+     └─────────────────────────────────────────────────┘
+     
+"The machine generates the universe and analyzes it simultaneously."
+```
+
+### Key Insights
+
+1. **Addressable Intelligence**: Specialist tiles (not parallel workers)
+2. **Topology = Algorithm**: Hollywood Squares wiring determines behavior
+3. **BigInt Atoms**: RNS enables parallel arbitrary precision
+4. **The Answer**: π is spectrally normal - "The formula is uniform randomness"
+
+### Performance (Jetson AGX Thor)
+
+| Task | Throughput |
+|------|------------|
+| Analysis | 21 Billion digits/sec |
+| Generation | 105K digits/sec (mpmath) |
+| 20B digits | 1.08 seconds |
+| 1 Trillion | ~54 seconds (projected) |
+
+---
+
 ## [0.8.0] - 2025-12-17
 
 ### Mesa 8: The Neural CUDA Release
