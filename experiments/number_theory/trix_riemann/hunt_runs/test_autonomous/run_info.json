@@ -1,0 +1,9 @@
+{
+  "target_zeros": 1000000.0,
+  "t_start": 14.0,
+  "t_end": 660232.0372219449,
+  "pts_per_zero": 10,
+  "device": "cuda",
+  "start_time": "2025-12-18T01:14:45.013159",
+  "resumed": false
+}

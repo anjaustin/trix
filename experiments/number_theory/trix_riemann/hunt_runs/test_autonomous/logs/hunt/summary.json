@@ -1,0 +1,8 @@
+{
+  "run_name": "hunt",
+  "end_time": "2025-12-18T01:14:47.113724",
+  "total_zeros": 976395,
+  "total_batches": 14,
+  "elapsed_seconds": 2.1007165908813477,
+  "zeros_per_second": 464791.39748706284
+}

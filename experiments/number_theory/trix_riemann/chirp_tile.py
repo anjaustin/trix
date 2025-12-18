@@ -22,6 +22,12 @@ import time
 from typing import Tuple, Optional
 from dataclasses import dataclass
 
+# Import logger
+try:
+    from hunt_logger import get_logger
+except ImportError:
+    get_logger = lambda: None
+
 # Constants
 PI = math.pi
 TWO_PI = 2.0 * PI

@@ -1,0 +1,10 @@
+{
+  "status": "interrupted",
+  "total_zeros": 976395,
+  "target_zeros": 1000000.0,
+  "t_reached": 660232.0372219449,
+  "t_end": 660232.0372219449,
+  "elapsed_seconds": 2.0005223751068115,
+  "zeros_per_second": 488070.0221850148,
+  "end_time": "2025-12-18T01:14:47.013694"
+}

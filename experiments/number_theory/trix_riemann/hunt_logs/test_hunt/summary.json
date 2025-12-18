@@ -1,0 +1,8 @@
+{
+  "run_name": "test_hunt",
+  "end_time": "2025-12-18T01:11:55.768034",
+  "total_zeros": 1834537,
+  "total_batches": 10,
+  "elapsed_seconds": 7.864670515060425,
+  "zeros_per_second": 233263.04598354877
+}

@@ -1,0 +1,11 @@
+{
+  "t_current": 660232.0372219449,
+  "total_zeros": 976395.0,
+  "total_points": 13057004.0,
+  "t_start": 14.0,
+  "t_end": 660232.0372219449,
+  "target_zeros": 1000000.0,
+  "pts_per_zero": 10.0,
+  "checkpoint_zeros": 100000.0,
+  "elapsed_before": 2.0002281665802
+}
