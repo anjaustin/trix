@@ -38,6 +38,9 @@ PI = math.pi
 TWO_PI = 2 * PI
 DEVICE = 'cuda'
 
+# Precision threshold: use hybrid below this, FP64 above
+HYBRID_THRESHOLD = 1e12
+
 # Directories
 SCRIPT_DIR = Path(__file__).parent
 CHECKPOINT_DIR = SCRIPT_DIR / 'checkpoints'
@@ -76,16 +79,73 @@ class HuntLogger:
             print(line)
 
 
-class HollywoodEngine:
-    """Hollywood pre-computed topology engine."""
+class HybridEngine:
+    """FP32 FFT with FP64 phase reduction. Fast for t < 10^12."""
     
     def __init__(self, t0_center, num_evals, device='cuda'):
         self.device = device
         self.num_evals = num_evals
-        self.oversampling = 4
+        self.mode = 'hybrid'
         
         self.M = int(math.sqrt(t0_center / TWO_PI)) + 10
-        self.num_grid = num_evals * self.oversampling
+        self.num_grid = num_evals * 4
+        
+        density = math.log(t0_center) / TWO_PI
+        self.delta = 1.0 / (density * 10)
+        
+        n = torch.arange(1, self.M + 1, device=device, dtype=torch.float64)
+        self.ln_n = torch.log(n)
+        self.rsqrt_n = torch.rsqrt(n).float()
+        
+        grid_idx = (self.delta * self.ln_n / (TWO_PI / self.num_grid)).float()
+        idx_floor = grid_idx.long()
+        frac = grid_idx - idx_floor.float()
+        
+        offsets = torch.tensor([-1, 0, 1, 2], device=device)
+        self.scatter_indices = ((idx_floor.unsqueeze(1) + offsets.unsqueeze(0)) % self.num_grid).flatten().long()
+        
+        t = frac
+        self.weights = torch.stack([
+            (1 - t)**3 / 6,
+            (3*t**3 - 6*t**2 + 4) / 6,
+            (-3*t**3 + 3*t**2 + 3*t + 1) / 6,
+            t**3 / 6
+        ], dim=1).to(torch.complex64)
+        
+        self.k = torch.arange(num_evals, device=device, dtype=torch.float32)
+    
+    def evaluate(self, t0):
+        phase = (t0 * self.ln_n) % TWO_PI
+        a_n = torch.complex(
+            self.rsqrt_n * torch.cos(phase).float(),
+            self.rsqrt_n * torch.sin(phase).float()
+        )
+        
+        contributions = (a_n.unsqueeze(1) * self.weights).flatten()
+        grid = torch.zeros(self.num_grid, device=self.device, dtype=torch.complex64)
+        grid.scatter_add_(0, self.scatter_indices, contributions)
+        
+        G = torch.fft.ifft(grid) * self.num_grid
+        S = G[:self.num_evals]
+        
+        t_vals = t0 + self.delta * self.k.double()
+        th = (t_vals/2 * torch.log(t_vals/TWO_PI) - t_vals/2 - PI/8 + 1/(48*t_vals)) % TWO_PI
+        
+        Z = 2.0 * (S.real * torch.cos(th).float() + S.imag * torch.sin(th).float())
+        
+        return t_vals, Z
+
+
+class FP64Engine:
+    """Pure FP64. Better for t >= 10^12."""
+    
+    def __init__(self, t0_center, num_evals, device='cuda'):
+        self.device = device
+        self.num_evals = num_evals
+        self.mode = 'fp64'
+        
+        self.M = int(math.sqrt(t0_center / TWO_PI)) + 10
+        self.num_grid = num_evals * 4
         
         density = math.log(t0_center) / TWO_PI
         self.delta = 1.0 / (density * 10)
@@ -94,38 +154,35 @@ class HollywoodEngine:
         self.ln_n = torch.log(n)
         self.rsqrt_n = torch.rsqrt(n)
         
-        self._build_topology()
-    
-    def _build_topology(self):
-        delta_omega = TWO_PI / self.num_grid
-        grid_idx = self.delta * self.ln_n / delta_omega
+        grid_idx = self.delta * self.ln_n / (TWO_PI / self.num_grid)
         idx_floor = grid_idx.long()
         frac = grid_idx - idx_floor.float()
         
-        offsets = torch.tensor([-1, 0, 1, 2], device=self.device)
-        self.scatter_indices = ((idx_floor.unsqueeze(1) + offsets.unsqueeze(0)) % self.num_grid)
-        self.scatter_indices = self.scatter_indices.flatten().long()
+        offsets = torch.tensor([-1, 0, 1, 2], device=device)
+        self.scatter_indices = ((idx_floor.unsqueeze(1) + offsets.unsqueeze(0)) % self.num_grid).flatten().long()
         
         t = frac
-        w0 = (1 - t)**3 / 6
-        w1 = (3*t**3 - 6*t**2 + 4) / 6
-        w2 = (-3*t**3 + 3*t**2 + 3*t + 1) / 6
-        w3 = t**3 / 6
-        self.weights = torch.stack([w0, w1, w2, w3], dim=1).to(torch.complex128)
+        self.weights = torch.stack([
+            (1 - t)**3 / 6,
+            (3*t**3 - 6*t**2 + 4) / 6,
+            (-3*t**3 + 3*t**2 + 3*t + 1) / 6,
+            t**3 / 6
+        ], dim=1).to(torch.complex128)
+        
+        self.k = torch.arange(num_evals, device=device, dtype=torch.float64)
     
     def evaluate(self, t0):
         phase = t0 * self.ln_n
         a_n = (self.rsqrt_n * torch.exp(1j * phase)).to(torch.complex128)
         
         contributions = (a_n.unsqueeze(1) * self.weights).flatten()
-        
         grid = torch.zeros(self.num_grid, device=self.device, dtype=torch.complex128)
         grid.scatter_add_(0, self.scatter_indices, contributions)
         
         G = torch.fft.ifft(grid) * self.num_grid
         S = G[:self.num_evals]
         
-        t_vals = t0 + self.delta * torch.arange(self.num_evals, device=self.device, dtype=torch.float64)
+        t_vals = t0 + self.delta * self.k
         th = t_vals/2 * torch.log(t_vals/TWO_PI) - t_vals/2 - PI/8 + 1/(48*t_vals)
         Z = 2.0 * (S * torch.exp(-1j * th)).real
         
@@ -217,11 +274,16 @@ class RiemannHunter:
         return proof
     
     def rebuild_engine(self, t_center):
-        """Rebuild engine for new t range."""
+        """Rebuild engine for new t range with adaptive precision."""
         M = int(math.sqrt(t_center / TWO_PI)) + 10
         num_evals = M * 8
         
-        self.engine = HollywoodEngine(t_center, num_evals, DEVICE)
+        # Use hybrid for t < 10^12, FP64 for t >= 10^12
+        if t_center < HYBRID_THRESHOLD:
+            self.engine = HybridEngine(t_center, num_evals, DEVICE)
+        else:
+            self.engine = FP64Engine(t_center, num_evals, DEVICE)
+        
         self.engine_t_center = t_center
         
         return num_evals
@@ -271,11 +333,16 @@ class RiemannHunter:
                 self.save_checkpoint(target)
                 self.wait_for_resume()
             
-            # Rebuild engine if t has grown significantly
-            if self.engine is None or self.t_current > self.engine_t_center * 2:
+            # Rebuild engine if t has grown significantly or crossed precision threshold
+            needs_rebuild = (
+                self.engine is None or 
+                self.t_current > self.engine_t_center * 2 or
+                (self.t_current >= HYBRID_THRESHOLD and self.engine.mode == 'hybrid')
+            )
+            if needs_rebuild:
                 self.log(f'Rebuilding engine for t ~ {self.t_current:.2e}')
                 num_evals = self.rebuild_engine(self.t_current)
-                self.log(f'  M={self.engine.M}, evals={num_evals}')
+                self.log(f'  M={self.engine.M}, evals={num_evals}, mode={self.engine.mode}')
             
             # Evaluate batch
             t_vals, Z_vals = self.engine.evaluate(self.t_current)
