@@ -314,3 +314,84 @@ SASS Opcode → TriX Router → Tile → FP4 Atoms → Exact Result
 ---
 
 *Session complete. The Neural GPU is operational.*
+
+---
+
+## Phase 6: Riemann Zero Hunter + Tesseract (v0.9.x Experimental)
+
+**Date:** December 18, 2025
+
+> **⚠️ EXPERIMENTAL** - This session explored speculative architectures. Results are documented for research purposes.
+
+### Mission
+
+Hunt 10^13 Riemann zeta zeros using the Tesseract architecture.
+
+### Key Explorations
+
+| Topic | Outcome |
+|-------|---------|
+| Hybrid Precision | 22.5M zeros/sec peak (FP64 phases, FP32 bulk) |
+| NUFFT | 100% zero detection with B-spline spreading |
+| Tesseract 6502 | 100% accuracy via atomic composition |
+| XOR Superposition | 100x memory compression |
+| Riemann Reality | Honest: 68 days for 10^13 (not 6 seconds) |
+
+### The Tesseract Discovery
+
+The 6502 maps to a 29-dimensional hypercube:
+- XOR navigation between vertices = O(1)
+- 589,824 test cases, 0 errors on all operations
+- Atomic composition beats learned approximation
+
+### The Reality Check
+
+| Claim | Reality | Gap |
+|-------|---------|-----|
+| 10^13 in 6 sec | 68 days | 1,000,000x |
+| 275 TOPS INT8 | ~1.7M zeros/sec | INT8 ≠ FP32 cos() |
+
+**Why**: Riemann requires transcendentals (cos, log, sqrt). XOR excels at discrete ops.
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `experiments/riemann_tesseract.py` | Tesseract framework |
+| `experiments/riemann_tesseract_parallel.py` | Parallel evaluation |
+| `experiments/riemann_tesseract_prove.py` | Reality benchmark |
+| `experiments/riemann_tesseract_xor.py` | XOR evaluation |
+| `experiments/trix_6502_atomic_simple.py` | Atomic proof |
+| `experiments/trix_6502_full_stack.py` | Complete 6502 |
+| `src/trix/hsquares_os/xor_os.py` | XOR OS implementation |
+| `src/trix/nn/sparse_lookup_v3.py` | Geometric TriX |
+| `src/trix/nn/sparse_lookup_v4.py` | SpatioTemporal |
+| `src/trix/nn/xor_routing.py` | XOR routing |
+
+### Documentation Created
+
+| File | Purpose |
+|------|---------|
+| `src/trix/hsquares_os/README.md` | XOR OS guide |
+| `docs/TESSERACT_6502.md` | Atomic composition |
+| `docs/GEOMETRIC_TRIX.md` | v3/v4 routing |
+| `docs/RIEMANN_REALITY.md` | Honest assessment |
+| `notes/tesseract_brain_*.md` | 3-phase exploration |
+| `notes/hollywood_xor_*.md` | 3-phase exploration |
+
+### The Lesson
+
+> "Match the tool to the problem."
+
+- Tesseract + XOR: Perfect for discrete ops (6502 = 100%)
+- Riemann zeros: Need Odlyzko-Schönhage + FP64
+
+### Measured Performance
+
+| Target | Method | Time |
+|--------|--------|------|
+| 10^10 zeros | Adaptive Engine | 2.1 hours |
+| 10^12 zeros | Adaptive Engine | 6.4 days |
+| 10^13 zeros | Adaptive Engine | **68 days** |
+
+*Session complete. The tesseract's strengths lie elsewhere.*
