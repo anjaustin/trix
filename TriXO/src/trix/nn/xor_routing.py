@@ -84,6 +84,88 @@ def popcount(x: torch.Tensor) -> torch.Tensor:
     return count
 
 
+# Lookup table for popcount of bytes 0-255
+_POPCOUNT_LUT = torch.tensor([bin(i).count('1') for i in range(256)], dtype=torch.int32)
+
+
+def popcount_vectorized(x: torch.Tensor) -> torch.Tensor:
+    """
+    Vectorized population count using lookup table.
+
+    Args:
+        x: uint8 tensor of any shape
+
+    Returns:
+        int32 tensor with popcount of each byte
+    """
+    lut = _POPCOUNT_LUT.to(x.device)
+    return lut[x.long()]
+
+
+def pack_ternary_batch(x: torch.Tensor) -> torch.Tensor:
+    """
+    Pack ternary {-1, 0, +1} to 2-bit representation in uint8.
+
+    Encoding: +1 -> 01, -1 -> 10, 0 -> 00
+    4 values per byte.
+
+    Args:
+        x: [batch, dim] ternary tensor
+
+    Returns:
+        [batch, (dim+3)//4] uint8 tensor
+    """
+    batch, dim = x.shape
+    packed_dim = (dim + 3) // 4
+
+    # Pad to multiple of 4
+    if dim % 4 != 0:
+        padding = 4 - (dim % 4)
+        x = torch.nn.functional.pad(x, (0, padding), value=0)
+
+    # Reshape to [batch, packed_dim, 4]
+    grouped = x.reshape(batch, -1, 4)
+
+    # Encode: +1 -> 01 (1), -1 -> 10 (2), 0 -> 00 (0)
+    encoded = torch.zeros_like(grouped, dtype=torch.uint8)
+    encoded[grouped > 0] = 1
+    encoded[grouped < 0] = 2
+
+    # Pack: [v0, v1, v2, v3] -> v0<<6 | v1<<4 | v2<<2 | v3
+    packed = (
+        (encoded[..., 0] << 6) |
+        (encoded[..., 1] << 4) |
+        (encoded[..., 2] << 2) |
+        encoded[..., 3]
+    )
+
+    return packed
+
+
+def hamming_distance_batch(
+    query: torch.Tensor,
+    signatures: torch.Tensor
+) -> torch.Tensor:
+    """
+    Compute Hamming distances from query to all signatures.
+
+    Uses packed 2-bit representation for efficiency.
+
+    Args:
+        query: [batch, packed_dim] packed queries (uint8)
+        signatures: [num_sigs, packed_dim] packed signatures (uint8)
+
+    Returns:
+        [batch, num_sigs] distances
+    """
+    # Broadcast XOR: [batch, 1, packed_dim] ^ [1, num_sigs, packed_dim]
+    xor = query.unsqueeze(1) ^ signatures.unsqueeze(0)
+    # [batch, num_sigs, packed_dim]
+
+    bit_counts = popcount_vectorized(xor)
+    return bit_counts.sum(dim=-1)
+
+
 class XORSignatures(nn.Module):
     """
     XOR-compressed signature storage.

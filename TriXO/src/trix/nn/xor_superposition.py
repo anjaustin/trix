@@ -468,12 +468,12 @@ class SuperpositionRouter(nn.Module):
         # Get ternary signatures
         sigs = self.get_ternary_signatures()  # [num_tiles, d_model]
 
-        # Normalize for cosine similarity
-        x_norm = F.normalize(x, dim=-1)
-        sigs_norm = F.normalize(sigs, dim=-1)
+        # Ternarize input for fair comparison
+        x_tern = torch.sign(x)
 
-        # Compute scores
-        scores = torch.matmul(x_norm, sigs_norm.T)  # [..., num_tiles]
+        # Raw dot product (not cosine) for equivalence with Hamming
+        # dot(a, b) = d_model - 2 * hamming(a, b) for ternary vectors
+        scores = torch.matmul(x_tern, sigs.T)  # [..., num_tiles]
 
         # Winner is max score
         tile_idx = scores.argmax(dim=-1)

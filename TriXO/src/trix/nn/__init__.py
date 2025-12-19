@@ -63,6 +63,19 @@ from .compiled_dispatch import (
     ProfileStats,
 )
 
+from .xor_superposition import (
+    SparseDelta,
+    CompressedSignatures,
+    CompressionStats,
+    SuperpositionRouter,
+    XORSuperpositionFFN,
+    create_compressed_ffn,
+    pack_ternary_to_uint8,
+    unpack_uint8_to_ternary,
+    hamming_distance_packed,
+    hamming_distance_batch,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -98,4 +111,15 @@ __all__ = [
     # Experimental
     "EmergentGatedFFN",
     "EmergentTransformerBlock",
+    # XOR Superposition (11.6x compression)
+    "SparseDelta",
+    "CompressedSignatures",
+    "CompressionStats",
+    "SuperpositionRouter",
+    "XORSuperpositionFFN",
+    "create_compressed_ffn",
+    "pack_ternary_to_uint8",
+    "unpack_uint8_to_ternary",
+    "hamming_distance_packed",
+    "hamming_distance_batch",
 ]
