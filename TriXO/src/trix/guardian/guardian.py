@@ -164,7 +164,14 @@ class GuardianAngel(nn.Module):
             self._prev_state = current_repr.detach().clone()
             return {'message': 'First observation', 'magnitude': 0.0}
         
-        _, info = self.xor_reflector(current_repr, previous_repr)
+        # Handle shape mismatches (different batch sizes)
+        if current_repr.shape != previous_repr.shape:
+            # Use mean representation for comparison
+            current_mean = current_repr.mean(dim=0, keepdim=True)
+            previous_mean = previous_repr.mean(dim=0, keepdim=True)
+            _, info = self.xor_reflector(current_mean, previous_mean)
+        else:
+            _, info = self.xor_reflector(current_repr, previous_repr)
         
         # Update previous state
         self._prev_state = current_repr.detach().clone()

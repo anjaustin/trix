@@ -377,6 +377,9 @@ class ObservationBuffer:
         stacked = torch.stack(tensors)  # [window_size, obs_dim]
         
         if encoder is not None:
+            # Move to same device as encoder
+            device = next(encoder.parameters()).device
+            stacked = stacked.to(device)
             stacked = torch.stack([encoder(t) for t in stacked])
         
         return stacked
