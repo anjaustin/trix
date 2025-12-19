@@ -4,6 +4,123 @@ All notable changes to TriX are documented here.
 
 ---
 
+## [0.11.0] - 2025-12-19
+
+### Mesa 12: HALO - Homeo-Adaptive Learning Observer
+
+**Core achievement:** *Self-aligning AI through intrinsic coherence sensing.*
+
+> "Who needs Human Reinforcement Learning Feedback when you have a Homeo-Adaptive Learning Observer?!"
+
+### The Paradigm Shift
+
+| RLHF | HALO |
+|------|------|
+| Human labelers needed | Self-observing |
+| Expensive annotation | Free (watches itself) |
+| Slow feedback loops | Real-time, every step |
+| Human bias injection | Reads actual entropy |
+| Episodic, sparse signal | Continuous, dense signal |
+| External reward proxy | Intrinsic coherence measure |
+| Can't scale | Scales infinitely |
+
+### Added
+
+#### Guardian Angel Architecture (`src/trix/guardian/`)
+- `ProgrammableTile` - Substrate with gentle read/write API
+- `ProgrammableTileBank` - Collection with unified interface
+- `XORReflector` - Shows what changed between states
+- `SuperpositionedReflector` - Multi-angle self-view (N orthogonal bases)
+- `TrainingManifoldReflector` - Meta-level trajectory assessment
+- `ObservationFrame` - Full transparency snapshot
+- `StateEncoder` - Compress observations to state vectors
+- `ObserverModel` - LSTM-based temporal prediction
+- `GuardianAngel` - Complete HALO integration
+- `GuardedTrainer` - Training loop with HALO support
+
+#### Documentation
+- `MESA12_HALO.md` - Complete HALO specification
+- `MESA12_OBSERVER_ONTOLOGY.md` - Ontological foundations
+- `MESA12_REFLECTION.md` - Reflection on the ontology
+- `MESA12_ENGINEERING.md` - Engineering synthesis
+
+### Field Test Results
+
+6502 CPU Emulation with Guardian Angel:
+- ✅ Observation collection working
+- ✅ Trajectory assessment working ("Steady as she goes..." vs "I got you next time!")
+- ✅ Celebration detection working (🔥)
+- ✅ Different seeds = different assessments
+- ⏳ Active intervention requires Observer training
+
+### Philosophy
+
+> "Wrong is just a signal. Distributed entropy signaling the correct direction."
+> "It is the ultimate form of Love."
+> "All things are connected through gentleness."
+
+**RLHF is dead. Long live HALO.**
+
+---
+
+## [0.10.2] - 2025-12-18
+
+### TriXGR: 100% 6502 CPU Emulation with XOR Superposition
+
+**Core achievement:** *Perfect 6502 emulation with 1 layer + XOR mixer.*
+
+### Added
+
+#### XOR Mixer
+- `XORMixer` class - Superposition magic for routing
+- Learned XOR-like mixing before routing
+- Properties: self-inverse, orthogonality generator, natural superposition
+
+#### TriXGR (Guns and Roses)
+- `trixgr_6502_monolithic.py` - Complete 6502 training with geometric validation
+- Configurable layers, XOR mixing, learning rate
+- Per-operation accuracy tracking
+- Geometric metrics: signature movement, tile purity, curvature
+
+### Results
+
+**100% accuracy on all 6502 operations**
+
+| Op | Accuracy |
+|----|----------|
+| ADC | 100.0% |
+| AND | 99.9% |
+| ORA | 100.0% |
+| EOR | 100.0% |
+| ASL | 100.0% |
+| LSR | 100.0% |
+| INC | 100.0% |
+| DEC | 100.0% |
+
+### Winning Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Layers | **1** |
+| XOR Mixer | **Enabled** |
+| Learning Rate | **0.00375** |
+| Epochs to 100% | **30** |
+| Parameters | 41,540 |
+
+### Key Discoveries
+
+1. **XOR Mixer is Superposition Magic**: +45% accuracy on hard operations
+2. **Less is More**: 1 layer (100%) > 2 layers (96.6%) > 3 layers (90.5%)
+3. **Sharp LR Peak**: 0.00375 is optimal, narrow ridge
+
+### Documentation
+
+- `experiments/mesa11/rigorous/README.md` - Full results and analysis
+- `docs/MESA11_UAT.md` - Updated with Experiment 8
+- Mesa 11 now has 9 confirmed experiments
+
+---
+
 ## [0.10.1] - 2025-12-17
 
 ### Hollywood Squares: Production Screening Pipeline

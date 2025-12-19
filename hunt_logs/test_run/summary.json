@@ -1,8 +1,0 @@
-{
-  "run_name": "test_run",
-  "end_time": "2025-12-18T01:10:34.465722",
-  "total_zeros": 8950,
-  "total_batches": 10,
-  "elapsed_seconds": 0.5021460056304932,
-  "zeros_per_second": 8950.0
-}

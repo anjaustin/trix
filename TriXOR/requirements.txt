@@ -1,0 +1,12 @@
+# TriX Dependencies
+
+# Core (tested with these versions)
+torch>=2.0.0
+numpy>=1.24.0
+
+# Development
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Note: No other dependencies required!
+# TriX is designed to be lightweight and portable.

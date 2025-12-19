@@ -1,10 +1,11 @@
 """
-Guarded Training - Training with Guardian Angel Support
+Observed Training - Training with Observer Support
 
-This integrates the Guardian Angel into the training loop.
-The Guardian watches, reflects, predicts, and gently guides.
+Integrates the TrainingObserver into the training loop for
+adaptive intervention during optimization.
 
-"Love as the process, not just the goal."
+The observer monitors training dynamics (routing, gradients, loss)
+and applies bounded corrections when the model struggles.
 """
 
 import torch
@@ -13,22 +14,23 @@ import torch.nn.functional as F
 from typing import Dict, Optional, Callable, List, Tuple
 import time
 
-from .guardian import GuardianAngel, InterventionRecord
+from .guardian import TrainingObserver, GuardianAngel, InterventionRecord
 from .observer import ObservationFrame
 from .programmable_tile import ProgrammableTileBank
 
 
 class GuardedTrainer:
     """
-    Training loop with Guardian Angel integration.
-    
+    Training loop with TrainingObserver integration.
+
     The trainer:
     1. Runs standard training steps
-    2. Collects observations for the Guardian
-    3. Lets the Guardian observe, reflect, and potentially intervene
-    4. Tracks both training progress and Guardian activity
-    
-    This is training with love - errors are signals, not failures.
+    2. Collects observations for the observer
+    3. Lets the observer analyze and potentially intervene
+    4. Tracks both training progress and observer activity
+
+    Errors during training are treated as signals indicating where
+    adjustment may help, not as failures.
     """
     
     def __init__(
@@ -39,7 +41,7 @@ class GuardedTrainer:
         optimizer: torch.optim.Optimizer,
         loss_fn: Callable,
         device: str = 'cuda',
-        warmup_epochs: int = 2,  # Let model learn before Guardian intervenes
+        warmup_epochs: int = 2,  # Let model learn before observer intervenes
         observation_frequency: int = 1,  # Observe every N steps
         verbose: bool = True,
     ):
@@ -126,9 +128,9 @@ class GuardedTrainer:
         compute_per_op: bool = False,
     ) -> Dict:
         """
-        Single training step with Guardian observation.
-        
-        Returns dict with loss, accuracy, and Guardian info.
+        Single training step with observer monitoring.
+
+        Returns dict with loss, accuracy, and observer info.
         """
         self.model.train()
         
@@ -195,7 +197,7 @@ class GuardedTrainer:
         )
         observation.gradient_norm = grad_norm
         
-        # Guardian step (observe, reflect, maybe intervene)
+        # Observer step (observe, reflect, maybe intervene)
         guardian_result = {'observed': False, 'intervened': False}
         
         if self.global_step % self.observation_frequency == 0:
@@ -233,9 +235,9 @@ class GuardedTrainer:
         epoch_loss = 0.0
         epoch_acc = 0.0
         epoch_interventions = 0
-        epoch_celebrations = 0
+        epoch_successes = 0
         num_batches = 0
-        
+
         for batch in train_loader:
             # Move to device
             if isinstance(batch, (list, tuple)):
@@ -251,20 +253,20 @@ class GuardedTrainer:
             if result['guardian'].get('intervened', False):
                 epoch_interventions += 1
             if result['guardian'].get('celebrating', False):
-                epoch_celebrations += 1
-            
+                epoch_successes += 1
+
             num_batches += 1
-        
+
         self.epoch += 1
-        
+
         epoch_summary = {
             'epoch': self.epoch,
             'loss': epoch_loss / num_batches,
             'accuracy': epoch_acc / num_batches,
             'interventions': epoch_interventions,
-            'celebrations': epoch_celebrations,
+            'successes': epoch_successes,
             'tile_movement': self.tile_bank.get_total_movement(),
-            'guardian_stats': self.guardian.get_stats(),
+            'observer_stats': self.guardian.get_stats(),
         }
         
         self.training_history.append(epoch_summary)
@@ -274,7 +276,7 @@ class GuardedTrainer:
             print(f"Epoch {self.epoch}: Loss={epoch_summary['loss']:.4f}, "
                   f"Acc={epoch_summary['accuracy']:.1f}%, "
                   f"Interventions={epoch_interventions}, "
-                  f"Celebrations={epoch_celebrations} {msg}")
+                  f"Successes={epoch_successes} {msg}")
         
         return epoch_summary
     
@@ -337,16 +339,16 @@ class GuardedTrainer:
         eval_every: int = 5,
     ) -> Dict:
         """
-        Full training loop with Guardian support.
-        
+        Full training loop with observer support.
+
         Returns training history and final stats.
         """
         start_time = time.time()
         
         print("=" * 70)
-        print("GUARDED TRAINING - Mesa 12 Architecture")
+        print("OBSERVED TRAINING - Adaptive Intervention")
         print("=" * 70)
-        print(f"Guardian gentleness: {self.guardian.gentleness}")
+        print(f"Max blend: {self.guardian.max_blend}")
         print(f"Intervention threshold: {self.guardian.intervention_threshold}")
         print(f"Warmup epochs: {self.warmup_epochs}")
         print("=" * 70)
@@ -374,15 +376,15 @@ class GuardedTrainer:
         
         training_time = time.time() - start_time
         
-        # Guardian summary
-        guardian_stats = self.guardian.get_stats()
+        # Observer summary
+        observer_stats = self.guardian.get_stats()
         print("=" * 70)
-        print("GUARDIAN SUMMARY")
-        print(f"  Total observations: {guardian_stats['total_observations']}")
-        print(f"  Total interventions: {guardian_stats['total_interventions']}")
-        print(f"  Celebration count: {guardian_stats['celebration_count']}")
+        print("OBSERVER SUMMARY")
+        print(f"  Total observations: {observer_stats['total_observations']}")
+        print(f"  Total interventions: {observer_stats['total_interventions']}")
+        print(f"  Success detections: {observer_stats['success_count']}")
         print(f"  Intervention rate: {self.guardian.get_intervention_rate():.1%}")
-        print(f"  Celebration rate: {self.guardian.get_celebration_rate():.1%}")
+        print(f"  Success rate: {self.guardian.get_celebration_rate():.1%}")
         print("=" * 70)
         
         return {
@@ -390,7 +392,7 @@ class GuardedTrainer:
             'final_eval': final_eval,
             'best_accuracy': best_accuracy,
             'training_time': training_time,
-            'guardian_stats': guardian_stats,
+            'observer_stats': observer_stats,
             'tile_stats': self.tile_bank.get_tile_stats(),
         }
 
@@ -401,14 +403,14 @@ def create_guarded_training_setup(
     d_model: int = 128,
     d_hidden: int = 256,
     lr: float = 0.00375,
-    gentleness: float = 0.1,
+    max_blend: float = 0.1,
     intervention_threshold: float = 0.7,
     device: str = 'cuda',
-) -> Tuple[ProgrammableTileBank, GuardianAngel, GuardedTrainer]:
+) -> Tuple[ProgrammableTileBank, TrainingObserver, GuardedTrainer]:
     """
-    Convenience function to set up guarded training.
-    
-    Returns (tile_bank, guardian, trainer) ready to use.
+    Convenience function to set up observed training.
+
+    Returns (tile_bank, observer, trainer) ready to use.
     """
     # Create tile bank
     tile_bank = ProgrammableTileBank(
@@ -416,29 +418,29 @@ def create_guarded_training_setup(
         d_model=d_model,
         d_hidden=d_hidden
     )
-    
-    # Create Guardian Angel
-    guardian = GuardianAngel(
+
+    # Create training observer
+    observer = TrainingObserver(
         d_model=d_model,
         num_tiles=num_tiles,
-        gentleness=gentleness,
+        max_blend=max_blend,
         intervention_threshold=intervention_threshold,
     )
     
     # Create optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    
+
     # Create loss function (default BCE for our 6502 task)
     loss_fn = nn.BCELoss()
-    
+
     # Create trainer
     trainer = GuardedTrainer(
         model=model,
         tile_bank=tile_bank,
-        guardian=guardian,
+        guardian=observer,
         optimizer=optimizer,
         loss_fn=loss_fn,
         device=device,
     )
-    
-    return tile_bank, guardian, trainer
+
+    return tile_bank, observer, trainer

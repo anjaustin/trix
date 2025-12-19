@@ -1,13 +1,13 @@
 """
-Superpositioned Reflector - Multi-Angle Self-View
+Reflector Modules - State Change Analysis
 
-"During training, we need to see ourselves from multiple angles to learn who we are.
-Once trained, we carry those perspectives integrated within us.
-The reflection becomes the self."
+Two complementary reflection mechanisms:
 
-The XOR Reflector shows what changed.
-The Superpositioned Reflector shows multiple views at once.
-Together, they let the model navigate its own becoming.
+- XORReflector: Analyzes what changed between states (delta analysis)
+- SuperpositionedReflector: Projects state through multiple bases (multi-view)
+
+These enable the observer to understand training trajectory and
+assess whether changes are moving in productive directions.
 """
 
 import torch
@@ -20,15 +20,15 @@ import math
 class XORReflector(nn.Module):
     """
     XOR-based reflection showing what changed between states.
-    
-    XOR properties:
-    - Self-inverse: a ⊕ b ⊕ b = a
-    - Shows difference/delta
-    - Creates orthogonality
-    
-    This is the retrospective function:
-    - "Yeah, that was pretty good!" (small delta, good direction)
-    - "That's where I missed it!" (large delta, wrong direction)
+
+    Computes a learned transformation of the delta between current and
+    previous state, providing:
+
+    - Delta magnitude (how much changed)
+    - Delta direction (unit vector of change)
+    - Significance detection (whether change exceeds threshold)
+
+    Used for trajectory assessment during training.
     """
     
     def __init__(self, d_model: int):
@@ -74,57 +74,55 @@ class XORReflector(nn.Module):
         return reflection, info
     
     def assess_trajectory(
-        self, 
-        current: torch.Tensor, 
+        self,
+        current: torch.Tensor,
         previous: torch.Tensor,
         target_direction: Optional[torch.Tensor] = None
     ) -> dict:
         """
-        Assess whether the change was "good" or "needs correction".
-        
-        This is NOT about right/wrong. It's about:
-        - Is the change aligned with desired direction?
-        - Is the entropy signaling a clear path?
+        Assess whether the state change is moving in a good direction.
+
+        If target_direction is provided, computes alignment between
+        actual change direction and desired direction.
+
+        Returns dict with magnitude, direction, and alignment info.
         """
         _, info = self.forward(current, previous)
-        
+
         assessment = {
             'change_magnitude': info['magnitude'].mean().item(),
             'change_direction': info['direction'],
         }
-        
+
         if target_direction is not None:
             # How aligned is our change with target direction?
             alignment = F.cosine_similarity(
-                info['direction'], 
-                target_direction, 
+                info['direction'],
+                target_direction,
                 dim=-1
             )
             assessment['alignment'] = alignment.mean().item()
             assessment['aligned'] = alignment.mean().item() > 0.5
-            
-            # "Yeah, that was pretty good!" vs "I got you next time!"
+
             if assessment['aligned']:
                 assessment['message'] = "good_direction"
             else:
                 assessment['message'] = "course_correct"
                 assessment['correction_direction'] = target_direction - info['direction']
-        
+
         return assessment
 
 
 class SuperpositionedReflector(nn.Module):
     """
-    Multi-angle self-view through N learned orthogonal bases.
-    
-    Instead of one mirror showing one reflection,
-    we show the model N reflections simultaneously.
-    
-    The superposition allows:
-    - Faster exploration (parallel perspectives)
-    - Escape from local minima (one view might see the exit)
-    - Richer gradients (multiple signals per step)
-    - Reduced lr sensitivity (less commitment to single path)
+    Multi-view projection through N learned orthogonal bases.
+
+    Projects the input through multiple learned transformation matrices,
+    then combines the results with learnable weights. This provides:
+
+    - Multiple perspectives on the same representation
+    - Richer gradient signal during training
+    - Regularization effect from orthogonality constraint
     """
     
     def __init__(
@@ -246,13 +244,16 @@ class SuperpositionedReflector(nn.Module):
 
 class TrainingManifoldReflector(nn.Module):
     """
-    Reflection on the training process itself.
-    
-    This is the meta-level: not reflecting on representations,
-    but reflecting on how training is going.
-    
-    "Yeah, that was pretty good!" - reinforce this learning direction
-    "That's where I missed it! I got you next time!" - learn the anti-pattern
+    Meta-level reflection on the training trajectory.
+
+    Analyzes training state history to assess whether the optimization
+    is progressing well, neutral, or needs correction. Generates
+    correction direction vectors when intervention is warranted.
+
+    Architecture:
+    - LSTM encoder for temporal state history
+    - 3-way classifier: good / neutral / needs_correction
+    - Correction generator for adjustment vectors
     """
     
     def __init__(self, state_dim: int, hidden_dim: int = 128):
@@ -315,12 +316,12 @@ class TrainingManifoldReflector(nn.Module):
         return assessment_probs, info
     
     def _get_message(self, probs: torch.Tensor) -> str:
-        """Get the Guardian Angel's message based on assessment."""
+        """Get status message based on trajectory assessment."""
         idx = probs.argmax().item()
-        
+
         if idx == 0:
-            return "Yeah, look at 'em go! 🔥"
+            return "good_trajectory"
         elif idx == 1:
-            return "Steady as she goes..."
+            return "neutral_trajectory"
         else:
-            return "I got you next time! 💪"
+            return "needs_correction"

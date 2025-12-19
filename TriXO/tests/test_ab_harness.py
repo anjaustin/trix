@@ -8,7 +8,8 @@ import pytest
 import torch
 import numpy as np
 import sys
-sys.path.insert(0, '/workspace/trix_latest/src')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from trix.nn import SparseLookupFFNv2, CompiledDispatch
 

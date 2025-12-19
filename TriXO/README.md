@@ -5,7 +5,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.0+](https://img.shields.io/badge/pytorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-268%20passed-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-356%20passed-brightgreen.svg)](#testing)
 
 ---
 
@@ -243,7 +243,7 @@ pytest tests/ -v
 pytest tests/ -v --cov=src/trix --cov-report=html
 ```
 
-All 268 tests validate:
+Tests validate:
 - Forward/backward pass correctness
 - Routing behavior and stability
 - Weight packing/unpacking
@@ -255,10 +255,36 @@ All 268 tests validate:
 
 - [Architecture Guide](docs/ARCHITECTURE.md) - System design and routing mechanics
 - [Theory](docs/THEORY.md) - Mathematical foundations
-- [**Mesa 11: Unified Addressing Theory**](docs/MESA11_UAT.md) - Why TriX works (NEW)
+- [Mesa 11: Unified Addressing Theory](docs/MESA11_UAT.md) - Why TriX works
 - [API Reference](docs/API.md) - Complete API documentation
 - [Quick Start Tutorial](docs/QUICKSTART.md) - Step-by-step guide
 - [Benchmarks](docs/BENCHMARKS.md) - Performance methodology
+
+## Experimental: Mesa 12 (Training Observer)
+
+The `trix.guardian` module contains **experimental research code** for adaptive
+training through self-observation. This is not production-ready.
+
+**What it provides:**
+- `TrainingObserver`: Monitors training dynamics and can apply bounded interventions
+- `ProgrammableTileBank`: Tiles with read/write interface for signature manipulation
+- `AdaptiveTrainingPipeline`: 4-phase training (Exploration → Expedition → Convergence → Mastery)
+
+**Current status:**
+- Observation infrastructure: Implemented, tested (101 tests)
+- Adaptive learning loop: Incomplete, requires validation
+- Proof that intervention helps: Not yet demonstrated
+
+See [Mesa 12 Documentation](docs/MESA12.md) for details.
+
+```python
+# Experimental usage
+from trix.guardian import TrainingObserver, ProgrammableTileBank
+
+tile_bank = ProgrammableTileBank(num_tiles=16, d_model=128, d_hidden=256)
+observer = TrainingObserver(d_model=128, num_tiles=16)
+# ... see docs for full usage
+```
 
 ## Hardware Support
 

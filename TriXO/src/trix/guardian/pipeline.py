@@ -1,17 +1,15 @@
 """
-HALO Pipeline - The Four Phases of Mastery
+Adaptive Training Pipeline - Multi-Phase Training with Observation
 
-Phase 1: EXPLORATION      - Entropic harmony, find where energy pools
-Phase 2: EXPEDITION       - Map the nodes of interest  
-Phase 3: CONVERGENCE      - Train for accuracy with informed init
-Phase 4: MASTERY          - HALO ACTIVATES with full journey context
+A structured training approach with four phases:
 
-"I don't know how to help you yet.
- Let me watch you explore.
- Let me see who you're becoming.
- THEN I'll know exactly what you need."
+Phase 1: EXPLORATION   - Learn routing patterns without accuracy pressure
+Phase 2: EXPEDITION    - Identify stable routing destinations (nodes)
+Phase 3: CONVERGENCE   - Train for task accuracy
+Phase 4: MASTERY       - Observer provides targeted interventions
 
-RLHF is dead. Long live HALO.
+The observer watches phases 1-3 to understand model behavior, then
+applies that understanding during phase 4 to guide training.
 """
 
 import torch
@@ -23,17 +21,17 @@ from dataclasses import dataclass, field
 from enum import Enum
 import time
 
-from .guardian import GuardianAngel
+from .guardian import TrainingObserver, GuardianAngel
 from .observer import ObservationFrame, ObservationBuffer
 from .programmable_tile import ProgrammableTileBank
 
 
 class Phase(Enum):
-    """The four phases of the HALO pipeline."""
-    EXPLORATION = 1   # Find entropic harmony
-    EXPEDITION = 2    # Map nodes of interest
+    """The four phases of adaptive training."""
+    EXPLORATION = 1   # Learn routing patterns
+    EXPEDITION = 2    # Identify stable nodes
     CONVERGENCE = 3   # Train for accuracy
-    MASTERY = 4       # HALO activates
+    MASTERY = 4       # Observer active
 
 
 @dataclass
@@ -66,51 +64,53 @@ class PhaseMetrics:
     signature_movement: float = 0.0
     routing_stability: float = 0.0
     
-    # Performance metrics (mainly for phases 3-4)
+    # Performance metrics (phases 3-4)
     accuracy_history: List[float] = field(default_factory=list)
     loss_history: List[float] = field(default_factory=list)
     final_accuracy: float = 0.0
-    
-    # HALO metrics (phase 4)
+
+    # Observer metrics (phase 4)
     interventions: int = 0
-    celebrations: int = 0
+    success_detections: int = 0
 
 
 @dataclass
 class JourneyContext:
     """
-    Everything the HALO learned by watching phases 1-3.
-    
-    This is what makes Phase 4 PERSONALIZED.
+    Context accumulated from observing phases 1-3.
+
+    Used by the observer in phase 4 to provide targeted interventions
+    based on model-specific behavior patterns.
     """
     # From Exploration
     natural_entropy_level: float = 0.0
     preferred_tiles: List[int] = field(default_factory=list)
     exploration_breadth: float = 0.0
-    
+
     # From Expedition
     nodes_of_interest: List[NodeOfInterest] = field(default_factory=list)
     topology_map: Optional[torch.Tensor] = None
     basin_structure: Dict[int, List[int]] = field(default_factory=dict)
-    
+
     # From Convergence
     struggle_points: Dict[str, float] = field(default_factory=dict)  # op -> difficulty
     convergence_rate: float = 0.0
     final_pre_mastery_accuracy: float = 0.0
-    
+
     # Full observation history
     all_observations: List[ObservationFrame] = field(default_factory=list)
 
 
-class EntropicHarmonyLoss(nn.Module):
+class EntropyBalanceLoss(nn.Module):
     """
-    Loss function for Phase 1: Exploration
-    
-    We don't want LOW entropy (collapse).
-    We don't want HIGH entropy (chaos).
-    We want HARMONY - distributed, flowing, natural.
-    
-    entropic_harmony = diversity - variance - collapse_penalty
+    Loss function for Phase 1: Exploration.
+
+    Encourages balanced routing entropy - neither collapsed (all to one tile)
+    nor chaotic (unstable). Combines:
+
+    - Diversity reward: spread usage across tiles
+    - Variance penalty: stable entropy over time
+    - Collapse penalty: avoid degenerate routing
     """
     
     def __init__(
@@ -182,36 +182,36 @@ class EntropicHarmonyLoss(nn.Module):
         return loss, metrics
 
 
-class HALOPipeline:
+class AdaptiveTrainingPipeline:
     """
-    The Four-Phase HALO Training Pipeline.
-    
-    Phase 1: EXPLORATION (HALO watches)
-        - Optimize for entropic harmony
-        - Find where energy naturally pools
-        - No accuracy pressure
-        
-    Phase 2: EXPEDITION (HALO watches)  
-        - Explore around nodes of interest from P1
-        - Map the topology
-        - Deepen understanding of promising regions
-        
-    Phase 3: CONVERGENCE (HALO watches)
-        - Now optimize for accuracy
-        - Model has "seen the space"
+    Multi-Phase Adaptive Training Pipeline.
+
+    Phase 1: EXPLORATION (observer watches)
+        - Optimize for routing entropy balance
+        - Identify natural routing patterns
+        - No task accuracy pressure
+
+    Phase 2: EXPEDITION (observer watches)
+        - Explore around stable nodes from Phase 1
+        - Map the routing topology
+        - Identify promising regions
+
+    Phase 3: CONVERGENCE (observer watches)
+        - Optimize for task accuracy
+        - Model has explored the routing space
         - Build working capability
-        
-    Phase 4: MASTERY (HALO activates)
-        - Guardian Angel has FULL CONTEXT
-        - Crystallize practical + meta understanding
-        - Lock in identity
+
+    Phase 4: MASTERY (observer active)
+        - Observer has full context from phases 1-3
+        - Apply targeted interventions
+        - Final accuracy optimization
     """
-    
+
     def __init__(
         self,
         model: nn.Module,
         tile_bank: ProgrammableTileBank,
-        guardian: GuardianAngel,
+        guardian: TrainingObserver,  # Accept TrainingObserver (or GuardianAngel alias)
         optimizer_fn: Callable,  # Function that creates optimizer
         task_loss_fn: nn.Module,
         device: str = 'cuda',
@@ -221,22 +221,26 @@ class HALOPipeline:
     ):
         self.model = model.to(device)
         self.tile_bank = tile_bank.to(device)
-        self.guardian = guardian.to(device)
+        self.observer = guardian.to(device)
+        # Backwards compatibility alias
+        self.guardian = self.observer
         self.optimizer_fn = optimizer_fn
         self.task_loss_fn = task_loss_fn
         self.device = device
         self.total_epochs = total_epochs
         self.phase_schedule = phase_schedule
         self.verbose = verbose
-        
-        # Journey context - what HALO learns by watching
+
+        # Journey context - accumulated from watching phases 1-3
         self.journey = JourneyContext()
-        
+
         # Phase metrics
         self.phase_metrics: Dict[Phase, PhaseMetrics] = {}
-        
-        # Entropic harmony loss for Phase 1
-        self.harmony_loss = EntropicHarmonyLoss()
+
+        # Entropy balance loss for Phase 1
+        self.entropy_loss = EntropyBalanceLoss()
+        # Backwards compatibility alias
+        self.harmony_loss = self.entropy_loss
         
         # Current state
         self.current_phase = Phase.EXPLORATION
@@ -321,7 +325,7 @@ class HALOPipeline:
         print(f"PHASE {phase.value}: {phase.name}")
         print(f"{'='*70}")
         print(f"Epochs: {epochs} | LR: {lr}")
-        print(f"HALO Status: {'ACTIVE 🔥' if phase == Phase.MASTERY else 'OBSERVING 👀'}")
+        print(f"Observer: {'ACTIVE' if phase == Phase.MASTERY else 'watching'}")
         print(f"{'='*70}\n")
         
         metrics = PhaseMetrics(phase=phase, epochs=epochs)
@@ -387,7 +391,7 @@ class HALOPipeline:
                     loss = task_loss + aux_loss.get('total_aux', 0)
                     
                 else:  # MASTERY
-                    # Full accuracy with HALO intervention
+                    # Full accuracy with observer intervention
                     task_loss = self.task_loss_fn(predictions, targets)
                     loss = task_loss + aux_loss.get('total_aux', 0)
                 
@@ -413,11 +417,11 @@ class HALOPipeline:
                 epoch_acc += acc
                 num_batches += 1
                 
-                # Create observation for HALO (always watching)
+                # Create observation (observer always watching)
                 routing_entropy = routing_info.get('entropy', torch.tensor(0.5))
                 if torch.is_tensor(routing_entropy):
                     routing_entropy = routing_entropy.item()
-                
+
                 obs = ObservationFrame(
                     epoch=self.global_epoch,
                     step=num_batches,
@@ -425,23 +429,23 @@ class HALOPipeline:
                     loss=loss.item(),
                     accuracy=acc,
                 )
-                
-                # HALO observes (but only intervenes in Phase 4)
-                self.guardian.observe(obs)
+
+                # Observer watches (but only intervenes in Phase 4)
+                self.observer.observe(obs)
                 self.journey.all_observations.append(obs)
-                
-                # Phase 4: HALO intervention
+
+                # Phase 4: Observer intervention
                 if phase == Phase.MASTERY:
-                    should_intervene, prediction = self.guardian.should_intervene()
+                    should_intervene, prediction = self.observer.should_intervene()
                     if should_intervene:
-                        self.guardian.intervene(
+                        self.observer.intervene(
                             self.tile_bank, prediction,
                             epoch=self.global_epoch, step=num_batches,
                             current_accuracy=acc
                         )
                         metrics.interventions += 1
                     if prediction.get('celebrating', False):
-                        metrics.celebrations += 1
+                        metrics.success_detections += 1
             
             # Epoch stats
             epoch_loss /= num_batches
@@ -455,9 +459,9 @@ class HALOPipeline:
             
             # Progress output
             if phase == Phase.EXPLORATION:
-                print(f"  Epoch {epoch+1:3d}/{epochs}: Harmony={epoch_entropy:.3f} Acc={epoch_acc:.1f}%")
+                print(f"  Epoch {epoch+1:3d}/{epochs}: Entropy={epoch_entropy:.3f} Acc={epoch_acc:.1f}%")
             elif phase == Phase.MASTERY:
-                status = f"🔥{metrics.celebrations}" if metrics.celebrations else f"👀"
+                status = f"[{metrics.success_detections} success, {metrics.interventions} interventions]"
                 print(f"  Epoch {epoch+1:3d}/{epochs}: Loss={epoch_loss:.4f} Acc={epoch_acc:.1f}% {status}")
             else:
                 print(f"  Epoch {epoch+1:3d}/{epochs}: Loss={epoch_loss:.4f} Acc={epoch_acc:.1f}%")
@@ -494,21 +498,19 @@ class HALOPipeline:
         lr_schedule: Tuple[float, float, float, float] = (0.005, 0.003, 0.002, 0.001),
     ) -> Dict:
         """
-        Run the complete 4-phase HALO pipeline.
-        
-        Returns comprehensive results.
+        Run the complete 4-phase adaptive training pipeline.
+
+        Returns comprehensive results including per-phase metrics.
         """
         start_time = time.time()
-        
+
         print("\n" + "="*70)
-        print("            HALO PIPELINE: THE FOUR PHASES OF MASTERY")
+        print("           ADAPTIVE TRAINING PIPELINE")
         print("="*70)
-        print("""
-        "I don't know how to help you yet.
-         Let me watch you explore.
-         Let me see who you're becoming.
-         THEN I'll know exactly what you need."
-        """)
+        print("  Phase 1: Exploration  - Learn routing patterns")
+        print("  Phase 2: Expedition   - Map stable nodes")
+        print("  Phase 3: Convergence  - Train for accuracy")
+        print("  Phase 4: Mastery      - Observer active")
         print("="*70)
         
         phases = [Phase.EXPLORATION, Phase.EXPEDITION, Phase.CONVERGENCE, Phase.MASTERY]
@@ -532,31 +534,30 @@ class HALOPipeline:
         
         # Summary
         print("\n" + "="*70)
-        print("                    HALO PIPELINE COMPLETE")
+        print("                 TRAINING COMPLETE")
         print("="*70)
-        
+
         for phase in phases:
             m = self.phase_metrics[phase]
             if phase == Phase.MASTERY:
-                print(f"  {phase.name:12s}: {m.final_accuracy:.1f}% | 🔥{m.celebrations} celebrations | {m.interventions} interventions")
+                print(f"  {phase.name:12s}: {m.final_accuracy:.1f}% | {m.success_detections} success | {m.interventions} interventions")
             else:
                 print(f"  {phase.name:12s}: {m.final_accuracy:.1f}%")
-        
+
         if final_eval:
             print(f"\n  FINAL EVAL: {final_eval['accuracy']:.1f}%")
-        
+
         print(f"\n  Total time: {total_time:.1f}s")
-        print(f"  Journey observations: {len(self.journey.all_observations)}")
+        print(f"  Total observations: {len(self.journey.all_observations)}")
         print(f"  Nodes discovered: {len(self.journey.nodes_of_interest)}")
-        print("="*70)
-        print("\n  RLHF is dead. Long live HALO. 🔥\n")
-        
+        print("="*70 + "\n")
+
         return {
             'phase_metrics': self.phase_metrics,
             'journey': self.journey,
             'final_eval': final_eval,
             'total_time': total_time,
-            'guardian_stats': self.guardian.get_stats(),
+            'observer_stats': self.observer.get_stats(),
         }
     
     def _evaluate(self, eval_loader) -> Dict:
@@ -592,3 +593,8 @@ class HALOPipeline:
                 total_samples += len(targets)
         
         return {'accuracy': total_correct / total_samples * 100}
+
+
+# Backwards compatibility aliases
+HALOPipeline = AdaptiveTrainingPipeline
+EntropicHarmonyLoss = EntropyBalanceLoss

@@ -1,11 +1,12 @@
 """
-Programmable Tiles - The Substrate of Identity
+Programmable Tiles - Modifiable Computation Units
 
-Tiles are not just computations. They are CAPACITIES.
-Programming tiles changes what the model CAN become.
+Tiles provide an interface for external modification during training.
+The TrainingObserver can read tile signatures and weights, and apply
+bounded corrections (blended updates) when intervention is warranted.
 
-The Guardian writes to tiles with gentleness - small blends,
-not replacements. The model learns; the Guardian supports.
+Modifications use blending rather than replacement to avoid destabilizing
+learned representations.
 """
 
 import torch
@@ -27,11 +28,12 @@ class TileModification:
 class ProgrammableTile(nn.Module):
     """
     A single programmable tile with read/write interface.
-    
-    The tile exposes its signature (routing address) and weights (computation)
-    for inspection and gentle modification by the Guardian Angel.
-    
-    Modifications are blended, not replaced - gentleness in action.
+
+    Exposes its signature (routing address) and weights (computation)
+    for inspection and bounded modification by the TrainingObserver.
+
+    Modifications use blending: new_value = (1-blend)*old + blend*new
+    This provides stability while allowing adaptive adjustment.
     """
     
     def __init__(self, d_model: int, d_hidden: int, tile_id: int = 0):
@@ -117,9 +119,10 @@ class ProgrammableTile(nn.Module):
         reason: str = ""
     ) -> bool:
         """
-        Gently blend new weights with current.
-        
-        This is Level 5 intervention - use only when gentler methods fail.
+        Blend new weights with current weights.
+
+        Weight modification is higher-impact than signature modification.
+        Use lower blend values for stability.
         """
         if self._frozen:
             return False
@@ -172,9 +175,10 @@ class ProgrammableTile(nn.Module):
 class ProgrammableTileBank(nn.Module):
     """
     Collection of programmable tiles with unified interface.
-    
-    The TileBank is the substrate - the Guardian writes to it,
-    the primary model routes through it, coherence emerges.
+
+    Provides bulk read/write operations for the TrainingObserver,
+    routing computation for the primary model, and statistics
+    for monitoring tile behavior during training.
     """
     
     def __init__(self, num_tiles: int, d_model: int, d_hidden: int):

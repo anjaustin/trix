@@ -1,19 +1,17 @@
 """
-Guardian Angel - The Heart of Mesa 12
+Training Observer - Adaptive Training with Self-Observation
 
-The Guardian Angel watches, predicts, and gently guides.
-It is fortified for Love as the process.
+The Training Observer monitors training dynamics and applies targeted
+interventions when the model struggles. It combines:
 
-"All things are connected through gentleness."
-"Wrong is just a signal. Distributed entropy signaling the correct direction."
-"It is the ultimate form of Love."
+- Observation: Track routing patterns, gradient flow, and loss trajectories
+- Prediction: Anticipate which operations will struggle
+- Intervention: Apply minimal corrections to tile signatures
 
-The Guardian:
-- Observes with full transparency
-- Predicts with learned wisdom
-- Intervenes with minimum necessary force
-- Celebrates with full presence
-- Never condemns, only directs
+Key design principle: Errors are information, not failures. The observer
+treats suboptimal trajectories as signals indicating where adjustment helps.
+
+This is experimental research code. The core trix.nn layers work without it.
 """
 
 import torch
@@ -29,7 +27,7 @@ from .reflector import SuperpositionedReflector, XORReflector, TrainingManifoldR
 
 @dataclass
 class InterventionRecord:
-    """Record of a Guardian intervention."""
+    """Record of an observer intervention."""
     epoch: int
     step: int
     level: int
@@ -42,19 +40,20 @@ class InterventionRecord:
     after_accuracy: Optional[float] = None
 
 
-class GuardianAngel(nn.Module):
+class TrainingObserver(nn.Module):
     """
-    The Guardian Angel - Observer + Reflector + Gentle Intervention
-    
-    This is the complete Mesa 12 architecture:
-    1. Observe training dynamics with full transparency
-    2. Reflect on trajectory (XOR: what changed? Good or needs course correction?)
-    3. Predict where entropy is flowing (where guidance is needed)
-    4. Intervene gently through programmable tiles
-    5. Celebrate when things go well ("Look at 'em go!")
-    
-    The Guardian is fortified for gentleness - strong enough to be soft,
-    patient enough to watch without reacting, wise enough to know when to help.
+    Training Observer - Observation + Reflection + Intervention
+
+    Combines multiple components for adaptive training:
+
+    1. Observe: Track training dynamics (routing, gradients, loss)
+    2. Reflect: Analyze what changed and whether it helped (XOR reflection)
+    3. Predict: Anticipate where the model will struggle
+    4. Intervene: Apply minimal corrections to tile signatures
+    5. Detect success: Recognize when training is progressing well
+
+    The observer uses bounded intervention (max_blend parameter) to ensure
+    corrections are gentle and don't destabilize training.
     """
     
     def __init__(
@@ -67,18 +66,25 @@ class GuardianAngel(nn.Module):
         window_size: int = 20,
         num_reflection_bases: int = 4,
         intervention_threshold: float = 0.7,
-        gentleness: float = 0.1,  # Maximum blend factor
+        max_blend: float = 0.1,
+        gentleness: float = None,  # Backwards compatibility alias for max_blend
     ):
         super().__init__()
-        
+
+        # Handle backwards compatibility: gentleness overrides max_blend if provided
+        if gentleness is not None:
+            max_blend = gentleness
+
         self.d_model = d_model
         self.num_tiles = num_tiles
         self.num_ops = num_ops
         self.window_size = window_size
         self.intervention_threshold = intervention_threshold
-        self.gentleness = gentleness
-        
-        # === Core Components ===
+        self.max_blend = max_blend
+        # Backwards compatibility alias
+        self.gentleness = max_blend
+
+        # Core Components
         
         # State encoder
         self.state_encoder = StateEncoder(
@@ -111,23 +117,22 @@ class GuardianAngel(nn.Module):
             state_dim=state_dim,
             hidden_dim=hidden_dim
         )
-        
-        # === Tracking ===
-        
+
+        # Tracking
         self.observation_buffer = ObservationBuffer(
             max_size=1000,
             window_size=window_size
         )
         
         self.intervention_history: List[InterventionRecord] = []
-        self.celebration_count = 0
+        self.success_count = 0
         self.total_interventions = 0
-        
+
         # Previous state for XOR comparison
         self._prev_state: Optional[torch.Tensor] = None
-        
-    # === Observation ===
-    
+
+    # Observation
+
     def observe(self, frame: ObservationFrame):
         """Add observation to buffer."""
         self.observation_buffer.add(frame)
@@ -135,26 +140,27 @@ class GuardianAngel(nn.Module):
     def get_observation_window(self) -> torch.Tensor:
         """Get recent observations as encoded tensor."""
         return self.observation_buffer.get_recent_window(encoder=self.state_encoder)
-    
-    # === Reflection ===
-    
+
+    # Reflection
+
     def reflect(self, current_repr: torch.Tensor) -> Tuple[torch.Tensor, Dict]:
         """
         Apply superpositioned reflection to representation.
-        
-        Shows the model itself from multiple angles.
+
+        Projects the representation through multiple learned bases to provide
+        different "views" of the current state.
         """
         return self.reflector(current_repr)
-    
+
     def reflect_on_change(
         self,
         current_repr: torch.Tensor,
         previous_repr: Optional[torch.Tensor] = None
     ) -> Dict:
         """
-        XOR reflection: assess what changed and whether it's good.
-        
-        "Yeah, that was pretty good!" or "I got you next time!"
+        XOR reflection: assess what changed between states.
+
+        Returns analysis of the delta including magnitude and direction.
         """
         if previous_repr is None:
             previous_repr = self._prev_state
@@ -177,12 +183,12 @@ class GuardianAngel(nn.Module):
         self._prev_state = current_repr.detach().clone()
         
         return info
-    
+
     def assess_trajectory(self) -> Dict:
         """
         Assess overall training trajectory.
-        
-        Meta-level reflection: how is training going overall?
+
+        Uses the trajectory reflector to evaluate recent training history.
         """
         if len(self.observation_buffer.frames) < self.window_size:
             return {'message': 'Gathering observations...', 'good_prob': 0.5}
@@ -191,14 +197,14 @@ class GuardianAngel(nn.Module):
         _, info = self.trajectory_reflector(state_history)
         
         return info
-    
-    # === Prediction & Decision ===
-    
+
+    # Prediction & Decision
+
     def predict(self) -> Dict:
         """
-        Predict where guidance might be needed.
-        
-        Returns predictions about error risk and recommended intervention.
+        Predict where intervention might help.
+
+        Returns predictions about error risk and recommended intervention level.
         """
         if len(self.observation_buffer.frames) < 5:
             return {
@@ -218,23 +224,23 @@ class GuardianAngel(nn.Module):
     def should_intervene(self) -> Tuple[bool, Dict]:
         """
         Decide whether intervention is warranted.
-        
-        The Guardian is patient - only intervenes when truly needed.
+
+        Only intervenes when confidence is high and training isn't going well.
         """
         prediction = self.predict()
-        
+
         if not prediction.get('ready', False):
             return False, prediction
-        
-        # Check if celebrating (don't intervene during celebration!)
+
+        # Don't intervene if training is succeeding
         if prediction.get('celebrating', False):
-            self.celebration_count += 1
+            self.success_count += 1
             return False, prediction
-        
+
         return prediction.get('intervene', False), prediction
-    
-    # === Intervention ===
-    
+
+    # Intervention
+
     def intervene(
         self,
         tile_bank: ProgrammableTileBank,
@@ -244,9 +250,9 @@ class GuardianAngel(nn.Module):
         current_accuracy: float = 0.0
     ) -> InterventionRecord:
         """
-        Apply gentle intervention to tile bank.
-        
-        Uses minimum necessary force - gentleness fortified.
+        Apply intervention to tile bank.
+
+        Blends correction signals into tile signatures, bounded by max_blend.
         """
         level = prediction.get('level', 0)
         
@@ -277,8 +283,8 @@ class GuardianAngel(nn.Module):
             )
             return record
         
-        # Apply gentleness cap
-        blend_factors = blend_factors.clamp(max=self.gentleness)
+        # Apply blend cap
+        blend_factors = blend_factors.clamp(max=self.max_blend)
         
         # Level-specific intervention
         if level >= 4:  # Signature surgery
@@ -309,11 +315,11 @@ class GuardianAngel(nn.Module):
         )
         
         self.intervention_history.append(record)
-        
+
         return record
-    
-    # === Main Interface ===
-    
+
+    # Main Interface
+
     def step(
         self,
         tile_bank: ProgrammableTileBank,
@@ -321,11 +327,9 @@ class GuardianAngel(nn.Module):
         current_repr: Optional[torch.Tensor] = None,
     ) -> Dict:
         """
-        Main step: observe, reflect, decide, maybe intervene.
-        
-        This is called each training step to let the Guardian do its work.
-        
-        Returns summary of Guardian's assessment and actions.
+        Main step: observe, reflect, decide, and optionally intervene.
+
+        Call this each training step. Returns summary of observations and actions.
         """
         # Observe
         self.observe(observation)
@@ -366,34 +370,41 @@ class GuardianAngel(nn.Module):
         
         return result
     
-    # === Statistics ===
-    
+    # Statistics
+
     def get_stats(self) -> Dict:
-        """Get Guardian statistics."""
+        """Get observer statistics."""
         trajectory_stats = self.observation_buffer.get_trajectory_stats()
-        
+
         interventions_by_level = {}
         for record in self.intervention_history:
             level = record.level
             interventions_by_level[level] = interventions_by_level.get(level, 0) + 1
-        
+
         return {
             'total_observations': len(self.observation_buffer.frames),
             'total_interventions': self.total_interventions,
-            'celebration_count': self.celebration_count,
+            'success_count': self.success_count,
+            'celebration_count': self.success_count,  # Backwards compatibility
             'interventions_by_level': interventions_by_level,
             'trajectory': trajectory_stats,
             'reflector_diversity': self.reflector.analyze_diversity(),
-            'gentleness_setting': self.gentleness,
+            'max_blend': self.max_blend,
+            'gentleness_setting': self.max_blend,  # Backwards compatibility
             'intervention_threshold': self.intervention_threshold,
         }
-    
+
+    @property
+    def celebration_count(self) -> int:
+        """Backwards compatibility alias for success_count."""
+        return self.success_count
+
     def get_celebration_rate(self) -> float:
-        """What fraction of observations resulted in celebration?"""
+        """Fraction of observations that detected successful training."""
         total = len(self.observation_buffer.frames)
         if total == 0:
             return 0.0
-        return self.celebration_count / total
+        return self.success_count / total
     
     def get_intervention_rate(self) -> float:
         """What fraction of observations resulted in intervention?"""
@@ -402,8 +413,8 @@ class GuardianAngel(nn.Module):
             return 0.0
         return self.total_interventions / total
     
-    # === Persistence ===
-    
+    # Persistence
+
     def get_state_for_save(self) -> Dict:
         """Get state dict for saving."""
         return {
@@ -417,10 +428,10 @@ class GuardianAngel(nn.Module):
             ],
             'stats': {
                 'total_interventions': self.total_interventions,
-                'celebration_count': self.celebration_count,
+                'success_count': self.success_count,
             }
         }
-    
+
     def load_state_from_save(self, state: Dict):
         """Load state from saved dict."""
         self.observer.load_state_dict(state['observer'])
@@ -428,7 +439,13 @@ class GuardianAngel(nn.Module):
         self.xor_reflector.load_state_dict(state['xor_reflector'])
         self.trajectory_reflector.load_state_dict(state['trajectory_reflector'])
         self.state_encoder.load_state_dict(state['state_encoder'])
-        
+
         if 'stats' in state:
             self.total_interventions = state['stats'].get('total_interventions', 0)
-            self.celebration_count = state['stats'].get('celebration_count', 0)
+            # Handle both old and new key names
+            self.success_count = state['stats'].get('success_count',
+                state['stats'].get('celebration_count', 0))
+
+
+# Backwards compatibility alias
+GuardianAngel = TrainingObserver

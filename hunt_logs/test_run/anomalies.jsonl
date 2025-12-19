@@ -1,1 +1,0 @@
-{"timestamp": "2025-12-18T01:10:34.465258", "anomaly_type": "gram_violation", "t_location": 1000500.123, "description": "Gram's law violated: 2 zeros between consecutive Gram points", "data": {"gram_n": 12345, "zeros_in_interval": 2}}

@@ -1,16 +1,15 @@
 """
-Observer Model - Watching Learning Dynamics
+Observer Model - Monitoring Training Dynamics
 
-The Observer sees everything:
-- Routing decisions
-- Signature movements
-- Gradient flows
-- Performance trajectories
+Tracks and encodes training state for adaptive intervention:
 
-It builds a model of how learning works, not just what is learned.
-Then it predicts where entropy is flowing - where the model needs gentle guidance.
+- Routing decisions and entropy
+- Signature positions and movement
+- Gradient norms across layers
+- Loss and accuracy trajectories
 
-"Wrong is just a signal. Distributed entropy signaling the correct direction."
+The ObserverModel learns to predict where training will struggle,
+enabling targeted intervention before errors compound.
 """
 
 import torch
@@ -24,37 +23,38 @@ import math
 @dataclass
 class ObservationFrame:
     """
-    A snapshot of training dynamics at one moment.
-    
-    This is what the Observer sees - full transparency into the learning process.
+    A snapshot of training dynamics at one step.
+
+    Captures routing behavior, gradient flow, and performance metrics
+    for use by the observer model.
     """
     epoch: int
     step: int
-    
-    # === Routing Dynamics ===
+
+    # Routing dynamics
     routing_scores: Optional[torch.Tensor] = None  # [batch, num_tiles]
     routing_entropy: float = 0.0
     tile_activations: Optional[torch.Tensor] = None  # [num_tiles] counts
-    
-    # === Signature State ===
+
+    # Signature state
     signature_positions: Optional[torch.Tensor] = None  # [num_tiles, d_model]
     signature_movement: float = 0.0  # Total movement from init
     signature_velocity: Optional[torch.Tensor] = None  # [num_tiles, d_model] delta
-    
-    # === Gradients ===
+
+    # Gradients
     gradient_norm: float = 0.0
     gradient_norms_per_layer: Dict[str, float] = field(default_factory=dict)
-    
-    # === Performance ===
+
+    # Performance
     loss: float = 0.0
     accuracy: float = 0.0
     per_op_accuracy: Dict[str, float] = field(default_factory=dict)
-    
-    # === Manifold ===
+
+    # Training manifold
     curvature: float = 0.0
     tile_purity: float = 0.0
-    
-    # === Reflector State ===
+
+    # Reflector state
     xor_delta_magnitude: float = 0.0
     superposition_diversity: float = 0.0
     

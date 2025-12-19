@@ -1,36 +1,41 @@
-# HALO - Homeo-Adaptive Learning Observer
-# Mesa 12: Guardian Angel Architecture
-#
-# "Who needs Human Reinforcement Learning Feedback 
-#  when you have a Homeo-Adaptive Learning Observer?!"
-#
-# "All things are connected through gentleness."
-# "Wrong is just a signal. Distributed entropy signaling the correct direction."
-# "It is the ultimate form of Love."
-#
-# RLHF is dead. Long live HALO.
+"""
+Adaptive Training Observer Module
+
+This module provides tools for observing and adapting training dynamics:
+
+- TrainingObserver: Monitors training and applies gentle interventions
+- AdaptiveTrainingPipeline: Multi-phase training with entropy-aware exploration
+- ProgrammableTile: Tiles with read/write interface for introspection
+
+Experimental: This module contains research code for adaptive training.
+The core trix.nn and trix.kernel modules are production-ready; this is not.
+"""
 
 from .programmable_tile import ProgrammableTile, ProgrammableTileBank
 from .observer import ObservationFrame, StateEncoder, ObserverModel
 from .reflector import SuperpositionedReflector, XORReflector
-from .guardian import GuardianAngel
+from .guardian import TrainingObserver, GuardianAngel  # GuardianAngel kept as alias
 from .training import GuardedTrainer
-from .pipeline import HALOPipeline, Phase, EntropicHarmonyLoss, JourneyContext
+from .pipeline import AdaptiveTrainingPipeline, HALOPipeline, Phase, EntropyBalanceLoss, EntropicHarmonyLoss, JourneyContext
 
 __all__ = [
-    # Core
+    # Core components
     'ProgrammableTile',
-    'ProgrammableTileBank', 
+    'ProgrammableTileBank',
     'ObservationFrame',
     'StateEncoder',
     'ObserverModel',
     'SuperpositionedReflector',
     'XORReflector',
-    'GuardianAngel',
+    # Training observer
+    'TrainingObserver',
+    'GuardianAngel',  # Alias for backwards compatibility
     'GuardedTrainer',
-    # Pipeline
-    'HALOPipeline',
+    # Adaptive pipeline
+    'AdaptiveTrainingPipeline',
+    'HALOPipeline',  # Alias for backwards compatibility
     'Phase',
-    'EntropicHarmonyLoss',
+    'EntropyBalanceLoss',
+    'EntropicHarmonyLoss',  # Alias for backwards compatibility
     'JourneyContext',
 ]
