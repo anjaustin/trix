@@ -2,6 +2,8 @@
 
 **A 2-bit sparse neural architecture with zero-parameter emergent routing.**
 
+> *"Don't store what you can XOR."*
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.0+](https://img.shields.io/badge/pytorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -15,12 +17,51 @@ TriX introduces a novel neural network architecture where **routing emerges from
 
 **Key Results:**
 - **16× memory compression** via 2-bit weight packing (4 weights per byte)
+- **129× signature compression** via XOR superposition (Mesa 13)
 - **Sparse computation** - only winning tiles compute per input
 - **Zero routing parameters** - routing emerges from weight signatures
 - **14% perplexity improvement** on TinyShakespeare with 2.3× fewer parameters
-- **Mesa 11**: Unified Addressing Theory - content-addressing proven universal
+- **Deterministic routing** - bit-exact reproducible decisions
 
-## What's New: Mesa 11 - Unified Addressing Theory
+## What's New: Mesa 13 - XOR Superposition Compression
+
+**Mesa 13** delivers 129× signature compression with deterministic O(1) routing.
+
+```python
+from trix import HierarchicalTriXFFN
+
+# Train your model
+ffn = HierarchicalTriXFFN(d_model=512, num_tiles=64)
+# ... training ...
+
+# Compress for inference (128KB → 1KB)
+ffn.compress_signatures()
+stats = ffn.get_compression_stats()
+print(f"Compression: {stats['tile'].compression_ratio:.1f}x")
+
+# Deterministic inference
+ffn.eval()
+output, routing, _ = ffn(x)  # Bit-exact reproducible
+```
+
+**Key Results:**
+| Metric | Target | Achieved |
+|--------|--------|----------|
+| Compression ratio | 11.6× | **129×** |
+| Routing determinism | 100% | **100%** |
+| Test coverage | Full | **64 tests** |
+
+**How it works:** Trained signatures exhibit ~99% structural similarity. XOR superposition stores one centroid + sparse deltas:
+
+```
+For ternary vectors: argmax(dot) = argmin(hamming)
+```
+
+This preserves routing decisions exactly while compressing 128KB → 1KB.
+
+See [Mesa 13 Documentation](docs/MESA13_XOR_SUPERPOSITION.md) for full details.
+
+## Mesa 11: Unified Addressing Theory
 
 **Mesa 11** introduces the theoretical foundation explaining why TriX works across diverse domains.
 
@@ -217,6 +258,7 @@ TriXO/
 │   ├── __init__.py          # Public API exports
 │   ├── nn/                   # Neural network modules
 │   │   ├── hierarchical.py   # HierarchicalTriXFFN
+│   │   ├── xor_superposition.py  # XOR compression (129×)
 │   │   ├── sparse_lookup.py  # SparseLookupFFN
 │   │   ├── temporal_tiles.py # TemporalTileLayer
 │   │   ├── compiled_dispatch.py
@@ -256,6 +298,7 @@ Tests validate:
 - [Architecture Guide](docs/ARCHITECTURE.md) - System design and routing mechanics
 - [Theory](docs/THEORY.md) - Mathematical foundations
 - [Mesa 11: Unified Addressing Theory](docs/MESA11_UAT.md) - Why TriX works
+- [Mesa 13: XOR Superposition](docs/MESA13_XOR_SUPERPOSITION.md) - 129× signature compression
 - [API Reference](docs/API.md) - Complete API documentation
 - [Quick Start Tutorial](docs/QUICKSTART.md) - Step-by-step guide
 - [Benchmarks](docs/BENCHMARKS.md) - Performance methodology

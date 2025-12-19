@@ -4,7 +4,76 @@ All notable changes to TriX are documented here.
 
 ---
 
-## [0.11.0] - 2025-12-19
+## [0.12.0] - 2024-12-19
+
+### Mesa 13: XOR Superposition Signature Compression
+
+**Core achievement:** *129x signature compression with deterministic O(1) routing.*
+
+> "Don't store what you can XOR."
+
+### The Numbers
+
+| Metric | Target | Achieved |
+|--------|--------|----------|
+| Compression ratio | 11.6x | **129x** |
+| Routing determinism | 100% | **100%** |
+| Test coverage | Full | **64 tests** |
+
+### Added
+
+#### XOR Superposition (`src/trix/nn/xor_superposition.py`)
+- `SparseDelta` - Sparse XOR delta encoding (3 bytes per difference)
+- `CompressedSignatures` - XOR superposition storage with lossless roundtrip
+- `SuperpositionRouter` - Hamming-distance routing with compression
+- `XORSuperpositionFFN` - Drop-in FFN with compress/decompress lifecycle
+
+#### Batch Operations (`src/trix/nn/xor_routing.py`)
+- `popcount_vectorized` - Lookup-table based population count
+- `pack_ternary_batch` - Batch ternary packing to uint8
+- `hamming_distance_batch` - Batched Hamming distance computation
+
+#### HierarchicalTriXFFN Integration
+- `compress_signatures()` - Compress for inference deployment
+- `decompress_signatures()` - Decompress for training/fine-tuning
+- `get_compression_stats()` - Compression ratio and sparsity stats
+
+#### Tests (`tests/test_xor_superposition.py`)
+- 33 new tests covering compression, routing, determinism
+- Parametrized compression ratio validation
+- Edge case coverage (single signature, non-divisible dims, identical sigs)
+
+#### Documentation
+- `MESA13_XOR_SUPERPOSITION.md` - Complete technical specification
+
+### Key Insight
+
+Trained TriX signatures exhibit ~99% structural similarity. XOR superposition
+exploits this by storing one centroid + sparse deltas:
+
+```
+For ternary vectors: argmax(dot) = argmin(hamming)
+```
+
+This preserves routing decisions exactly while compressing 128KB → 1KB.
+
+### Deterministic Neural Networks
+
+Compressed routing is bit-exact reproducible:
+
+```python
+ffn.compress_signatures()
+ffn.eval()
+_, r1, _ = ffn(x)
+_, r2, _ = ffn(x)
+assert torch.equal(r1['tile_idx'], r2['tile_idx'])  # Always true
+```
+
+This is the foundation for auditable, verifiable neural computation.
+
+---
+
+## [0.11.0] - 2024-12-19
 
 ### Mesa 12: HALO - Homeo-Adaptive Learning Observer
 

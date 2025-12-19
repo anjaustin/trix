@@ -6,9 +6,10 @@ Complete API documentation for the TriX library.
 
 1. [Core Modules](#core-modules)
 2. [Neural Network Layers](#neural-network-layers)
-3. [Kernel Operations](#kernel-operations)
-4. [Quantization-Aware Training](#quantization-aware-training)
-5. [Compiler](#compiler)
+3. [XOR Superposition](#xor-superposition)
+4. [Kernel Operations](#kernel-operations)
+5. [Quantization-Aware Training](#quantization-aware-training)
+6. [Compiler](#compiler)
 
 ---
 
@@ -317,6 +318,215 @@ def forward(
         x: Input tensor
         class_hint: Known class ID (enables O(1) dispatch)
         confidence: Required confidence for compiled path
+    """
+```
+
+---
+
+## XOR Superposition
+
+Signature compression and deterministic routing via XOR operations.
+
+### CompressedSignatures
+
+XOR superposition storage for ternary signatures.
+
+```python
+from trix.nn import CompressedSignatures
+
+class CompressedSignatures:
+    def compress(self, signatures: Tensor) -> 'CompressedSignatures':
+        """
+        Compress signatures via XOR superposition.
+
+        Args:
+            signatures: (num_sigs, d_model) ternary tensor
+
+        Returns:
+            self (for chaining)
+        """
+
+    def decompress(self, index: int) -> Tensor:
+        """Decompress single signature by index."""
+
+    def decompress_all(self) -> Tensor:
+        """Decompress all signatures. Returns (num_sigs, d_model)."""
+
+    def get_compression_stats(self) -> CompressionStats:
+        """Get compression statistics."""
+```
+
+**CompressionStats:**
+
+```python
+class CompressionStats(NamedTuple):
+    original_bytes: int
+    compressed_bytes: int
+    compression_ratio: float
+    mean_delta_sparsity: float
+    max_delta_sparsity: float
+    num_signatures: int
+```
+
+---
+
+### SuperpositionRouter
+
+Hamming-distance router with compression support.
+
+```python
+from trix.nn import SuperpositionRouter
+
+class SuperpositionRouter(nn.Module):
+    def __init__(
+        self,
+        num_tiles: int,
+        d_model: int,
+    ):
+        """
+        Args:
+            num_tiles: Number of routing tiles
+            d_model: Model dimension
+        """
+
+    def route(
+        self,
+        x: Tensor,
+        return_scores: bool = False,
+    ) -> Tuple[Tensor, Tensor]:
+        """
+        Route input to best-matching tile.
+
+        Returns:
+            tile_idx: (...) winning tile indices
+            scores_or_distances: (..., num_tiles)
+        """
+
+    def compress(self):
+        """Compress signatures for inference."""
+
+    def decompress(self):
+        """Decompress for training."""
+
+    def verify_routing_equivalence(
+        self,
+        x: Tensor,
+        tolerance: float = 0.0,
+    ) -> bool:
+        """Verify compressed routing matches uncompressed."""
+
+    def get_compression_stats(self) -> Optional[CompressionStats]:
+        """Get compression stats if compressed."""
+```
+
+---
+
+### XORSuperpositionFFN
+
+Drop-in FFN replacement with compression lifecycle.
+
+```python
+from trix.nn import XORSuperpositionFFN
+
+class XORSuperpositionFFN(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        num_tiles: int = 16,
+        d_hidden: Optional[int] = None,
+        dropout: float = 0.1,
+    ):
+        """
+        Args:
+            d_model: Model dimension
+            num_tiles: Number of routing tiles
+            d_hidden: Hidden dimension (default: 4 * d_model)
+            dropout: Dropout probability
+        """
+
+    def forward(
+        self,
+        x: Tensor,
+        return_routing_info: bool = False,
+    ) -> Tuple[Tensor, Optional[Dict]]:
+        """
+        Forward pass with routing.
+
+        Args:
+            x: (batch, seq, d_model) or (batch, d_model)
+            return_routing_info: Include routing details
+
+        Returns:
+            output: Same shape as input
+            routing_info: Optional dict with tile_idx, weights, entropy
+        """
+
+    def compress(self):
+        """Compress router for inference."""
+
+    def decompress(self):
+        """Decompress for training."""
+
+    def get_compression_stats(self) -> Optional[CompressionStats]:
+        """Get router compression stats."""
+```
+
+---
+
+### HierarchicalTriXFFN Compression Methods
+
+Extended methods on `HierarchicalTriXFFN` for signature compression.
+
+```python
+# After training, compress for inference
+ffn.compress_signatures()
+
+# Get compression statistics
+stats = ffn.get_compression_stats()
+# {'tile': CompressionStats(...), 'cluster': CompressionStats(...)}
+
+# Decompress for fine-tuning
+ffn.decompress_signatures()
+```
+
+---
+
+### Utility Functions
+
+```python
+from trix.nn import (
+    pack_ternary_to_uint8,
+    unpack_uint8_to_ternary,
+    hamming_distance_packed,
+    hamming_distance_batch,
+)
+
+def pack_ternary_to_uint8(ternary: Tensor) -> Tensor:
+    """
+    Pack ternary {-1, 0, +1} to 2-bit uint8.
+
+    Encoding: +1 → 01, -1 → 10, 0 → 00
+    4 values per byte.
+
+    Args:
+        ternary: (..., dim) tensor
+
+    Returns:
+        (..., (dim+3)//4) uint8 tensor
+    """
+
+def unpack_uint8_to_ternary(packed: Tensor, dim: int) -> Tensor:
+    """Unpack uint8 back to ternary. Inverse of pack_ternary_to_uint8."""
+
+def hamming_distance_batch(
+    query: Tensor,       # (batch, packed_dim) uint8
+    signatures: Tensor,  # (num_sigs, packed_dim) uint8
+) -> Tensor:
+    """
+    Compute Hamming distances from query to all signatures.
+
+    Returns:
+        (batch, num_sigs) distances
     """
 ```
 
