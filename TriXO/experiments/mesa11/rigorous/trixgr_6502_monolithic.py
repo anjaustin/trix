@@ -753,13 +753,13 @@ if __name__ == "__main__":
     
     # Run training (64 epochs)
     results = train_trixgr_6502(
-        epochs=64,
+        epochs=108,
         d_model=128,
         num_tiles=16,
         batch_size=512,
-        lr=0.00375,
+        lr=0.00337,
         device=device,
-        seed=42,
+        seed=1122911624,
     )
     
     # Save results
