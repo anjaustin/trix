@@ -1,5 +1,8 @@
 # Zero Routing Reflections
 
+> Doc maturity: Research note (reflection). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Examining the raw thoughts for nodes of opportunity*
 
 ---

@@ -1,5 +1,8 @@
 # Zero Routing Implementation - Raw Thoughts
 
+> Doc maturity: Research note (raw). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Stream of consciousness on how to integrate emergent routing into TriX*
 
 ---

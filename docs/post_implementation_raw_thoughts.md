@@ -1,5 +1,8 @@
 # Post-Implementation Raw Thoughts
 
+> Doc maturity: Research note (raw). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Stream of consciousness reflection on the journey from skepticism to discovery*
 
 ---

@@ -1,5 +1,8 @@
 # Raw Thoughts: The TriX Journey
 
+> Doc maturity: Research note (raw). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Unfiltered stream of consciousness*
 
 ---

@@ -1,5 +1,8 @@
 # Zero Routing Implementation Synthesis
 
+> Doc maturity: Research note (synthesis). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Converging on a concrete implementation plan*
 
 ---

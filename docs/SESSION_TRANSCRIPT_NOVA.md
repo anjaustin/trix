@@ -1,5 +1,8 @@
 # Session Transcript: Nova's Analysis
 
+> Doc maturity: Research note (session transcript). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Preserved verbatim from the December 15, 2024 discovery session.*
 
 ---

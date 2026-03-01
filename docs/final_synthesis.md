@@ -1,5 +1,8 @@
 # Synthesis: What Emerged
 
+> Doc maturity: Research note (synthesis). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Observing the convergence*
 
 ---

@@ -1,5 +1,8 @@
 # Big Leap: Raw Exploration
 
+> Doc maturity: Research note (raw). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Getting funky. Following threads. Seeing what wants to emerge.*
 
 ---

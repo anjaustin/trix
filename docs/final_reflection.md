@@ -1,5 +1,8 @@
 # Reflection: Converging on What Matters
 
+> Doc maturity: Research note (reflection). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *Looking at my raw thoughts and finding the signal*
 
 ---

@@ -1,5 +1,8 @@
 # Option A Postmortem: The Beautiful Failure
 
+> Doc maturity: Research note (postmortem). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 *What we learned from rigorous testing of train-dense/infer-sparse*
 
 ---

@@ -1,6 +1,9 @@
 # TriX Session Summary: Mesa 1, 2, and 3
 *December 15-16, 2024*
 
+> Doc maturity: Research note (session summary). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 ---
 
 ## Executive Summary

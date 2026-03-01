@@ -1,5 +1,8 @@
 # Riemann Zero Hunter - Project Overview
 
+> Doc maturity: Research note (number theory). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 ## Executive Summary
 
 A high-performance system for verifying zeros of the Riemann zeta function, targeting **10^16 zeros in under 24 hours** on a single Jetson AGX Thor.

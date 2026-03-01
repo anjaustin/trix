@@ -1,5 +1,8 @@
 # Riemann Reality: Honest Performance Assessment
 
+> Doc maturity: Research note (number theory). This is not a stable contract. It may be outdated.
+> For the current "how to run" docs, start at `docs/INDEX.md`.
+
 > **Documenting what we learned about Riemann zero computation.**
 
 ## The Goal

@@ -106,6 +106,26 @@ Optional fields (v1 extensions):
 - `fallback_reason` (string)
 - `tie_break` (string) : `first` | `hash`
 
+### Example Records
+
+Routing:
+
+```json
+{"schema_version":1,"event":"routing","run_id":"native-routing-t64-d1024-n8192-s1","seed":1,"address_type":"tile_id","tiles":64,"dim":1024,"inputs":8192,"tie_rate":0.0,"near_tie_rate":0.12,"margin_mean":4.2,"tie_break":"first","fallback_applied":false,"fallback_reason":null,"routing_ms":11.0,"routes_per_s":745000.0,"entropy_nats":4.15,"gini":0.05,"max_tile":7,"max_count":157}
+```
+
+Stability:
+
+```json
+{"schema_version":1,"event":"stability","run_id":"native-stability-t64-d1024-n8192-s1","seed":1,"address_type":"tile_id","tiles":64,"dim":1024,"inputs":8192,"tie_rate":0.0,"near_tie_rate":0.12,"margin_mean":4.2,"tie_break":"first","flip_prob":0.001,"routing_ms":11.0,"routes_per_s":745000.0,"churn":0.054}
+```
+
+Degeneracy detector (margin sweep):
+
+```json
+{"schema_version":1,"event":"margin_sweep","run_id":"native-margin_sweep-t2-d512-n4096-s1","seed":1,"address_type":"tile_id","tiles":2,"dim":512,"inputs":4096,"tie_break":"first","sweep":"bias","diff_dims":15,"bias":0.55,"p_zero":0.0,"flip_prob":0.001,"routing_ms":0.06,"routes_per_s":68000000.0,"tie_rate":0.0,"near_tie_rate":0.37,"margin_mean":6.7,"churn":0.16}
+```
+
 ## 4. Test Harness
 
 The native C++ harness in `native/` provides:
