@@ -15,6 +15,7 @@ This index points you to the highest-signal docs first.
 - `docs/BENCHMARKS.md` (canonical benchmark entrypoints)
 - `docs/CLI.md` (doctor/bench/bundle commands)
 - `docs/BUNDLE_SCHEMA.md` (bundle format and compatibility)
+- `docs/FUTURE_DEVELOPMENT_PLAN.md` (reachable use cases and next steps)
 
 ## Routing As A Primitive (Engineering)
 
