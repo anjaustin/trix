@@ -69,3 +69,28 @@ Note: `TriXO/` and `TriXOR/` appear to be sibling variants with their own `pypro
 - Boolean-ish / bounded-domain exact computation as "neural circuits": compile small circuits (adders/mux/etc.) into verified compositions; FP4 atoms are interesting here: `src/trix/compiler/`
 - Signature compression + storage for large tile libraries (XOR delta/superposition, Hamming-space routing) as a systems trick for scaling routing metadata: `src/trix/nn/xor_routing.py`, `src/trix/hsquares_os/`
 - Research sandbox for "routing as computation" and temporal/stateful routing ideas (plus associated experiments): `src/trix/nn/temporal_tiles.py`, `experiments/`, `docs/`
+
+## Falsification Findings (Routing Primitive)
+
+We added explicit falsification tests (native C++) to satisfy skeptics and to draw crisp boundaries around what is and is not guaranteed.
+
+1) Non-collapse is not universal
+- Counterexample: identical signatures across all tiles.
+  - All dot scores tie; argmax tie-break collapses everything to tile 0.
+- Counterexample: all-zero signatures.
+  - All dot scores are 0; also collapses to tile 0.
+- Takeaway: non-collapse requires distribution-health guards and/or regularizers; it is not implied by argmax(dot).
+
+2) Stability under small perturbations is not universal
+- Counterexample: tie-degenerate geometry (all-zero signatures).
+  - Before perturbation: always routes to tile 0.
+  - After tiny per-element signature resampling noise (e.g. flip_prob=0.001): churn can become large.
+- Takeaway: stability claims must specify assumptions about margin/tie structure and signature diversity.
+
+3) argmax(dot) != argmin(hamming) universally for ternary (with zeros)
+- Counterexample exists where dot-product prefers one signature but bit-Hamming on 2-bit ternary codes prefers another.
+- Takeaway: any dot<->Hamming equivalence must be stated with precise constraints (e.g. binary +/-1 only, or a modified distance that ignores x==0 positions).
+
+Artifacts:
+- `docs/ADDRESS_CONTRACT.md` documents these known counterexamples.
+- Native falsification tests live in `native/tests/test_falsify.cpp` and are run via `ctest`.

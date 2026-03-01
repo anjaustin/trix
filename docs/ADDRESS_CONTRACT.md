@@ -61,6 +61,10 @@ Under small perturbations to signatures (or small weight drift), routing should 
 Observable proxy (v1):
 - churn rate between routes at `t` and `t+Δ` is bounded for a small, controlled perturbation.
 
+#### Known Counterexamples
+
+Stability is not universal. If the routing geometry is tie-degenerate (e.g. identical signatures or all-zero signatures), then tiny per-element perturbations can induce large churn. These regimes should be detected via distribution health metrics and guarded against.
+
 ### I5: Contractability
 
 There exists a subset of addresses (e.g. stable classes) that can be compiled into a deterministic dispatch contract with explicit guardrails and a fallback path.
@@ -93,6 +97,15 @@ Stability fields:
 
 Notes:
 - v1 telemetry is intentionally minimal: it is meant to be lightweight and dependency-free.
+
+## 5. Falsification Tests
+
+To satisfy skeptics, the native test suite includes explicit falsification cases:
+- Non-collapse is not universal (degenerate signatures can collapse routing).
+- Stability is not universal (tie-degenerate geometries can exhibit high churn under small perturbations).
+- `argmax(dot)` is not universally equivalent to `argmin(hamming)` for ternary vectors with zeros.
+
+These tests assert that counterexamples exist; they are not treated as failures of the system.
 
 ## 4. Test Harness
 

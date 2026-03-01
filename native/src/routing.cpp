@@ -75,6 +75,26 @@ std::vector<int8_t> make_random_ternary(int n, uint64_t seed) {
   return out;
 }
 
+std::vector<int8_t> make_zeros(int n) {
+  std::vector<int8_t> out;
+  out.assign(static_cast<size_t>(n), static_cast<int8_t>(0));
+  return out;
+}
+
+std::vector<int8_t> make_identical_signatures(const RoutingConfig& cfg, uint64_t seed) {
+  const int dim = cfg.dim;
+  const int tiles = cfg.tiles;
+
+  std::vector<int8_t> one = make_random_ternary(dim, seed);
+  std::vector<int8_t> out;
+  out.resize(static_cast<size_t>(tiles) * static_cast<size_t>(dim));
+
+  for (int t = 0; t < tiles; t++) {
+    std::copy(one.begin(), one.end(), out.begin() + static_cast<size_t>(t) * static_cast<size_t>(dim));
+  }
+  return out;
+}
+
 void apply_ternary_resample_noise(int8_t* data, int n, double flip_prob, uint64_t seed) {
   if (flip_prob <= 0.0) return;
   if (flip_prob >= 1.0) flip_prob = 1.0;

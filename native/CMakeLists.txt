@@ -41,4 +41,12 @@ if(BUILD_TESTING)
   )
   target_include_directories(trix_native_routing_tests PRIVATE src)
   add_test(NAME trix_native_routing_tests COMMAND trix_native_routing_tests)
+
+  add_executable(trix_native_falsify_tests
+    tests/test_falsify.cpp
+    src/routing.cpp
+    src/metrics.cpp
+  )
+  target_include_directories(trix_native_falsify_tests PRIVATE src)
+  add_test(NAME trix_native_falsify_tests COMMAND trix_native_falsify_tests)
 endif()

@@ -17,6 +17,12 @@ struct RoutingConfig {
 
 std::vector<int8_t> make_random_ternary(int n, uint64_t seed);
 
+// Fill vector with zeros.
+std::vector<int8_t> make_zeros(int n);
+
+// Make signatures where every tile has the same signature.
+std::vector<int8_t> make_identical_signatures(const RoutingConfig& cfg, uint64_t seed);
+
 // Route each input to argmax over tile dot(signature, input).
 // Returns a vector of tile indices (size = inputs_n).
 std::vector<int> route_argmax(
