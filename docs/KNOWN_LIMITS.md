@@ -25,4 +25,10 @@ TriX is intentionally falsifiable. The repo includes explicit counterexamples th
 - Ternary+alpha semantics are correct relative to the declared computation, but alpha is not a universal approximation guarantee for float weights.
 - Mean(abs) alpha can be pathological (sparse outlier dilution) and quantization is discontinuous near threshold.
   - See `docs/ALPHA_SCALES.md`
-  - Tests: `tests/test_kernel_alpha_falsify.py`
+- Tests: `tests/test_kernel_alpha_falsify.py`
+
+## CLI
+
+- `trix bench` runs the benchmark suite under `experiments/`.
+  - In wheel-only installs without the repo checkout, `experiments/` is typically not available.
+  - In that environment, `trix bench` is expected to fail with a clear message.

@@ -96,6 +96,10 @@ class DropInFFN(nn.Module):
         else:
             out, info, aux = self.ffn.forward(x, labels=labels)
 
+        # Normalize a couple of fields so downstream telemetry is consistent.
+        info.setdefault("compiled", False)
+        info.setdefault("guard_failed", False)
+
         return (out, info, aux) if return_aux else out
 
     def compile_stable(
