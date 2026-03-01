@@ -63,6 +63,13 @@ from .compiled_dispatch import (
     ProfileStats,
 )
 
+from .xor_superposition import (
+    CompressedSignatures,
+    pack_ternary_to_uint8,
+    unpack_uint8_to_ternary,
+    popcount_distance_packed,
+)
+
 from .lifecycle import (
     RoutingLifecycleV1,
     LifecycleGuardConfig,
@@ -93,6 +100,11 @@ __all__ = [
     "CompiledDispatch",
     "CompiledEntry",
     "ProfileStats",
+    # XOR superposition / compression
+    "CompressedSignatures",
+    "pack_ternary_to_uint8",
+    "unpack_uint8_to_ternary",
+    "popcount_distance_packed",
     # Lifecycle
     "RoutingLifecycleV1",
     "LifecycleGuardConfig",
