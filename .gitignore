@@ -99,3 +99,6 @@ flynnconceivable-clean/
 # Benchmark outputs
 results/
 *.log
+
+# macOS
+.DS_Store
