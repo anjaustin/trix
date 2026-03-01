@@ -49,4 +49,10 @@ if(BUILD_TESTING)
   )
   target_include_directories(trix_native_falsify_tests PRIVATE src)
   add_test(NAME trix_native_falsify_tests COMMAND trix_native_falsify_tests)
+
+  add_executable(trix_native_dot_popcount_tests
+    tests/test_dot_popcount_equivalence.cpp
+  )
+  target_include_directories(trix_native_dot_popcount_tests PRIVATE src)
+  add_test(NAME trix_native_dot_popcount_tests COMMAND trix_native_dot_popcount_tests)
 endif()

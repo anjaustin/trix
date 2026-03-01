@@ -21,6 +21,8 @@ struct Args {
   uint64_t seed = 1;
   double flip_prob = 0.01;
   std::optional<std::string> jsonl;
+  std::string tie_break = "first";  // first|hash
+  bool guard_ties = false;
 };
 
 static std::string make_run_id(const Args& args) {
@@ -34,7 +36,7 @@ static void usage(const char* argv0) {
   std::cerr
       << "Usage: " << argv0
       << " [--benchmark routing|stability] [--tiles N] [--dim N] [--inputs N] [--seed N]"
-         " [--flip-prob P] [--jsonl PATH]\n";
+         " [--flip-prob P] [--jsonl PATH] [--tie-break first|hash] [--guard-ties]\n";
 }
 
 static bool parse_int(const char* s, int* out) {
@@ -106,6 +108,10 @@ int main(int argc, char** argv) {
       if (!parse_double(need("--flip-prob"), &args.flip_prob)) return 2;
     } else if (std::strcmp(a, "--jsonl") == 0) {
       args.jsonl = std::string(need("--jsonl"));
+    } else if (std::strcmp(a, "--tie-break") == 0) {
+      args.tie_break = need("--tie-break");
+    } else if (std::strcmp(a, "--guard-ties") == 0) {
+      args.guard_ties = true;
     } else if (std::strcmp(a, "-h") == 0 || std::strcmp(a, "--help") == 0) {
       usage(argv[0]);
       return 0;
@@ -125,6 +131,16 @@ int main(int argc, char** argv) {
   cfg.tiles = args.tiles;
   cfg.dim = args.dim;
 
+  trix_native::TieBreak tie_break = trix_native::TieBreak::First;
+  if (args.tie_break == "hash") {
+    tie_break = trix_native::TieBreak::Hash;
+  } else if (args.tie_break == "first") {
+    tie_break = trix_native::TieBreak::First;
+  } else {
+    std::cerr << "Unknown --tie-break: " << args.tie_break << "\n";
+    return 2;
+  }
+
   const int sig_n = cfg.tiles * cfg.dim;
   const int in_n = args.inputs * cfg.dim;
 
@@ -138,20 +154,42 @@ int main(int argc, char** argv) {
 
   const std::string run_id = make_run_id(args);
 
+  trix_native::RoutingStats stats0;
+
   auto t0 = std::chrono::steady_clock::now();
-  std::vector<int> routes0 = trix_native::route_argmax(cfg, signatures.data(), inputs.data(), args.inputs);
+  std::vector<int> routes0 = trix_native::route_argmax_with_stats(
+      cfg, signatures.data(), inputs.data(), args.inputs, tie_break, args.seed, &stats0);
   auto t1 = std::chrono::steady_clock::now();
 
-  const double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-  const double routes_per_s = (static_cast<double>(args.inputs) / ms) * 1000.0;
+  double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+  double routes_per_s = (static_cast<double>(args.inputs) / ms) * 1000.0;
 
   trix_native::UsageMetrics um = trix_native::usage_metrics(routes0, cfg.tiles);
+
+  bool fallback_applied = false;
+  std::string fallback_reason;
+  trix_native::TieBreak effective_tie_break = tie_break;
+  if (args.guard_ties && stats0.tie_rate > 0.0 && tie_break == trix_native::TieBreak::First) {
+    // Guard against tie-degenerate collapse: switch to hash tie-break.
+    effective_tie_break = trix_native::TieBreak::Hash;
+    fallback_applied = true;
+    fallback_reason = "tie_guard";
+
+    auto tg0 = std::chrono::steady_clock::now();
+    routes0 = trix_native::route_argmax_with_stats(
+        cfg, signatures.data(), inputs.data(), args.inputs, effective_tie_break, args.seed, &stats0);
+    auto tg1 = std::chrono::steady_clock::now();
+    ms = std::chrono::duration<double, std::milli>(tg1 - tg0).count();
+    routes_per_s = (static_cast<double>(args.inputs) / ms) * 1000.0;
+    um = trix_native::usage_metrics(routes0, cfg.tiles);
+  }
 
   if (args.benchmark == "routing") {
     std::cout << "routing_ms=" << ms << " routes_per_s=" << routes_per_s << " entropy_nats=" << um.entropy_nats
               << " gini=" << um.gini << " max_tile=" << um.max_tile << " max_count=" << um.max_count << "\n";
 
     if (writer.has_value()) {
+      const char* tb = (effective_tie_break == trix_native::TieBreak::Hash) ? "hash" : "first";
       writer->write_kv({
           {"schema_version", "1"},
           {"event", json_string("routing")},
@@ -161,6 +199,11 @@ int main(int argc, char** argv) {
           {"inputs", std::to_string(args.inputs)},
           {"seed", std::to_string(args.seed)},
           {"address_type", json_string("tile_id")},
+          {"tie_rate", json_number(stats0.tie_rate)},
+          {"margin_mean", json_number(stats0.margin_mean)},
+          {"tie_break", json_string(tb)},
+          {"fallback_applied", fallback_applied ? "true" : "false"},
+          {"fallback_reason", fallback_applied ? json_string(fallback_reason) : "null"},
           {"routing_ms", json_number(ms)},
           {"routes_per_s", json_number(routes_per_s)},
           {"entropy_nats", json_number(um.entropy_nats)},
@@ -176,13 +219,16 @@ int main(int argc, char** argv) {
     std::vector<int8_t> signatures2 = signatures;
     trix_native::apply_ternary_resample_noise(signatures2.data(), sig_n, args.flip_prob, args.seed ^ 0xDEADBEEFULL);
 
-    std::vector<int> routes1 = trix_native::route_argmax(cfg, signatures2.data(), inputs.data(), args.inputs);
+    trix_native::RoutingStats stats1;
+    std::vector<int> routes1 = trix_native::route_argmax_with_stats(
+        cfg, signatures2.data(), inputs.data(), args.inputs, tie_break, args.seed, &stats1);
     const double churn = trix_native::route_churn_rate(routes0, routes1);
 
     std::cout << "routing_ms=" << ms << " routes_per_s=" << routes_per_s << " churn=" << churn
               << " flip_prob=" << args.flip_prob << "\n";
 
     if (writer.has_value()) {
+      const char* tb = (tie_break == trix_native::TieBreak::Hash) ? "hash" : "first";
       writer->write_kv({
           {"schema_version", "1"},
           {"event", json_string("stability")},
@@ -192,6 +238,9 @@ int main(int argc, char** argv) {
           {"inputs", std::to_string(args.inputs)},
           {"seed", std::to_string(args.seed)},
           {"address_type", json_string("tile_id")},
+          {"tie_rate", json_number(stats0.tie_rate)},
+          {"margin_mean", json_number(stats0.margin_mean)},
+          {"tie_break", json_string(tb)},
           {"flip_prob", json_number(args.flip_prob)},
           {"routing_ms", json_number(ms)},
           {"routes_per_s", json_number(routes_per_s)},

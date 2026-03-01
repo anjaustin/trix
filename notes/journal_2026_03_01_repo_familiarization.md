@@ -94,3 +94,9 @@ We added explicit falsification tests (native C++) to satisfy skeptics and to dr
 Artifacts:
 - `docs/ADDRESS_CONTRACT.md` documents these known counterexamples.
 - Native falsification tests live in `native/tests/test_falsify.cpp` and are run via `ctest`.
+
+Follow-up (tightened claim + guards):
+- We wrote a constrained equivalence note and test harness for when dot-product routing can be implemented as packed XOR+POPCNT distance:
+  - `docs/DOT_POPCOUNT_EQUIVALENCE.md`
+  - `native/tests/test_dot_popcount_equivalence.cpp`
+- We extended native telemetry with tie/margin fields and added a deterministic tie-break (`--tie-break hash`) plus an optional tie-guard (`--guard-ties`) for tie-degenerate geometries.

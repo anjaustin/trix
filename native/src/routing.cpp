@@ -1,6 +1,7 @@
 #include "routing.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <random>
 
@@ -117,26 +118,88 @@ std::vector<int> route_argmax(
     const int8_t* signatures,
     const int8_t* inputs,
     int inputs_n) {
+  RoutingStats ignored;
+  return route_argmax_with_stats(cfg, signatures, inputs, inputs_n, TieBreak::First, 0, &ignored);
+}
+
+static inline uint64_t mix64(uint64_t x) {
+  // SplitMix64
+  x += 0x9E3779B97F4A7C15ULL;
+  x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+  x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+  return x ^ (x >> 31);
+}
+
+static inline uint64_t hash_input_row(const int8_t* x, int n, uint64_t seed) {
+  uint64_t h = mix64(seed ^ static_cast<uint64_t>(n));
+  const int step = (n >= 64) ? (n / 64) : 1;
+  for (int i = 0; i < n; i += step) {
+    h ^= static_cast<uint64_t>(static_cast<uint8_t>(x[i] + 2));
+    h = mix64(h);
+  }
+  return h;
+}
+
+std::vector<int> route_argmax_with_stats(
+    const RoutingConfig& cfg,
+    const int8_t* signatures,
+    const int8_t* inputs,
+    int inputs_n,
+    TieBreak tie_break,
+    uint64_t seed,
+    RoutingStats* out_stats) {
   const int tiles = cfg.tiles;
   const int dim = cfg.dim;
 
   std::vector<int> routes;
   routes.resize(static_cast<size_t>(inputs_n));
 
+  int64_t ties = 0;
+  double margin_sum = 0.0;
+
   for (int i = 0; i < inputs_n; i++) {
     const int8_t* x = inputs + static_cast<size_t>(i) * static_cast<size_t>(dim);
-    int best_t = 0;
+
     int32_t best = std::numeric_limits<int32_t>::min();
+    int32_t second = std::numeric_limits<int32_t>::min();
+    int best_t = 0;
+    int best_count = 0;
 
     for (int t = 0; t < tiles; t++) {
       const int8_t* sig = signatures + static_cast<size_t>(t) * static_cast<size_t>(dim);
       int32_t s = dot_ternary(x, sig, dim);
       if (s > best) {
+        second = best;
         best = s;
         best_t = t;
+        best_count = 1;
+      } else if (s == best) {
+        best_count++;
+      } else if (s > second) {
+        second = s;
       }
     }
+
+    if (second == std::numeric_limits<int32_t>::min()) second = best;
+    const int32_t margin = best - second;
+    margin_sum += static_cast<double>(margin);
+    if (margin == 0) ties++;
+
+    if (best_count > 1 && tie_break == TieBreak::Hash) {
+      const uint64_t h = hash_input_row(x, dim, seed);
+      best_t = static_cast<int>(h % static_cast<uint64_t>(tiles));
+    }
+
     routes[static_cast<size_t>(i)] = best_t;
+  }
+
+  if (out_stats) {
+    RoutingStats s;
+    s.inputs = inputs_n;
+    s.ties = ties;
+    s.tie_rate = (inputs_n > 0) ? (static_cast<double>(ties) / static_cast<double>(inputs_n)) : 0.0;
+    s.margin_mean = (inputs_n > 0) ? (margin_sum / static_cast<double>(inputs_n)) : 0.0;
+    *out_stats = s;
   }
 
   return routes;

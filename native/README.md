@@ -20,6 +20,16 @@ Run:
 ./native/build/trix_routebench --benchmark stability --tiles 64 --dim 512 --inputs 4096 --seed 1 --flip-prob 0.01
 ```
 
+Tie handling:
+
+```bash
+# Deterministic tie-break (default: first)
+./native/build/trix_routebench --benchmark routing --tie-break hash
+
+# Guard against tie-degenerate collapse (switches first->hash if ties occur)
+./native/build/trix_routebench --benchmark routing --tie-break first --guard-ties
+```
+
 JSONL telemetry:
 
 ```bash

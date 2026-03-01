@@ -98,6 +98,20 @@ Stability fields:
 Notes:
 - v1 telemetry is intentionally minimal: it is meant to be lightweight and dependency-free.
 
+Optional fields (v1 extensions):
+- `tie_rate` (number) : fraction of inputs that had argmax ties
+- `margin_mean` (number) : mean(best_score - second_best_score)
+- `fallback_applied` (bool)
+- `fallback_reason` (string)
+- `tie_break` (string) : `first` | `hash`
+
+## 4. Test Harness
+
+The native C++ harness in `native/` provides:
+- a routing microbenchmark (distribution health metrics)
+- a stability benchmark (churn under controlled perturbations)
+- a unit/invariant test suite (`ctest`)
+
 ## 5. Falsification Tests
 
 To satisfy skeptics, the native test suite includes explicit falsification cases:
@@ -107,9 +121,6 @@ To satisfy skeptics, the native test suite includes explicit falsification cases
 
 These tests assert that counterexamples exist; they are not treated as failures of the system.
 
-## 4. Test Harness
+## 6. Dot/POPCNT Note
 
-The native C++ harness in `native/` provides:
-- a routing microbenchmark (distribution health metrics)
-- a stability benchmark (churn under controlled perturbations)
-- a unit/invariant test suite (`ctest`)
+See `docs/DOT_POPCOUNT_EQUIVALENCE.md` for the precise conditions under which dot-product routing can be implemented as a packed XOR+POPCNT distance computation.

@@ -10,6 +10,18 @@ struct RoutingConfig {
   int dim = 512;
 };
 
+enum class TieBreak {
+  First = 0,
+  Hash = 1,
+};
+
+struct RoutingStats {
+  int64_t inputs = 0;
+  int64_t ties = 0;      // count of inputs where best == second_best
+  double tie_rate = 0.0;
+  double margin_mean = 0.0;  // mean(best - second_best)
+};
+
 // Signatures and inputs are in {-1, 0, +1} stored as int8.
 // Layout:
 // - signatures: tiles * dim
@@ -30,6 +42,17 @@ std::vector<int> route_argmax(
     const int8_t* signatures,
     const int8_t* inputs,
     int inputs_n);
+
+// Same as route_argmax, but also computes tie/margin stats.
+// tie_break controls how to select a winner when multiple tiles share the max score.
+std::vector<int> route_argmax_with_stats(
+    const RoutingConfig& cfg,
+    const int8_t* signatures,
+    const int8_t* inputs,
+    int inputs_n,
+    TieBreak tie_break,
+    uint64_t seed,
+    RoutingStats* out_stats);
 
 // Apply random independent flips to ternary vectors.
 // flip_prob is probability per element of resampling it uniformly from {-1,0,+1}.
