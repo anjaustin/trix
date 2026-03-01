@@ -100,6 +100,7 @@ class SparseLookupFFNv2(nn.Module):
         dropout: float = 0.1,
         # New options
         use_score_calibration: bool = True,
+        routing_backend: str = "hierarchical_dot",
         ternary_weight: float = 0.01,
         sparsity_weight: float = 0.01,
         diversity_weight: float = 0.01,
@@ -131,6 +132,12 @@ class SparseLookupFFNv2(nn.Module):
         self.use_score_calibration = use_score_calibration
         if use_score_calibration:
             self.score_calibrator = ScoreCalibrationSpline(num_knots=8)
+
+        if routing_backend not in {"hierarchical_dot", "flat_popcount"}:
+            raise ValueError(
+                "routing_backend must be one of: hierarchical_dot, flat_popcount"
+            )
+        self.routing_backend = routing_backend
 
         # ======================
         # EXISTING COMPONENTS
@@ -275,6 +282,7 @@ class SparseLookupFFNv2(nn.Module):
         x: torch.Tensor,
         signatures: torch.Tensor,
         return_scores: bool = False,
+        backend: Optional[str] = None,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
         Hierarchical routing with optional score calibration.
@@ -283,6 +291,12 @@ class SparseLookupFFNv2(nn.Module):
             tile_idx: Selected tile per input [B*T]
             scores: Optional calibrated scores [B*T, num_tiles]
         """
+        backend = backend or self.routing_backend
+        if backend == "flat_popcount":
+            return self._route_flat_popcount(x, signatures, return_scores=return_scores)
+        if backend != "hierarchical_dot":
+            raise ValueError(f"unknown routing backend: {backend}")
+
         batch_size = x.shape[0]
         device = x.device
 
@@ -330,6 +344,40 @@ class SparseLookupFFNv2(nn.Module):
                 all_scores[rows[:, None], cluster_tiles[None, :]] = scores
 
         return tile_idx, all_scores
+
+    def _route_flat_popcount(
+        self,
+        x: torch.Tensor,
+        signatures: torch.Tensor,
+        *,
+        return_scores: bool,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        """Flat routing using packed XOR+POPCNT distance.
+
+        This backend is intended for "addressable" routing experiments where
+        both inputs and signatures are treated as ternary.
+
+        - Inputs are ternarized via sign(x).
+        - Distances are computed in packed 2-bit space.
+        - Coordinates where x==0 are masked out to match dot semantics.
+        """
+
+        from .xor_superposition import pack_ternary_to_uint8, popcount_distance_packed
+
+        x_tern = torch.sign(x)
+        sigs = torch.sign(signatures)
+
+        px = pack_ternary_to_uint8(x_tern)
+        ps = pack_ternary_to_uint8(sigs)
+
+        dist = popcount_distance_packed(px, ps, ignore_x_zeros=True)
+        tile_idx = dist.argmin(dim=-1)
+
+        if not return_scores:
+            return tile_idx, None
+
+        scores = -dist.to(torch.float32)
+        return tile_idx, scores
 
     # =========================================================================
     # ISLAND REGULARIZERS (new)
@@ -470,6 +518,7 @@ class SparseLookupFFNv2(nn.Module):
         routing_info = {
             "tile_idx": tile_idx.view(B, T),
             "compressed": compressed.view(B, T, 2),
+            "routing_backend": self.routing_backend,
         }
 
         # Compute all losses

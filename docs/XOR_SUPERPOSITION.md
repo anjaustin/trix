@@ -24,3 +24,9 @@ In particular:
 - Implementation: `src/trix/nn/xor_superposition.py`
 - Tests:
   - `tests/test_xor_superposition.py` (lossless compress/decompress + equivalence tests)
+
+## Integration
+
+- `SparseLookupFFNv2` supports an opt-in routing backend `flat_popcount` that uses packed XOR+POPCNT distances:
+  - set `routing_backend="flat_popcount"` at construction, or pass `backend="flat_popcount"` to `route(...)`.
+  - this backend ternarizes inputs via `sign(x)`.
