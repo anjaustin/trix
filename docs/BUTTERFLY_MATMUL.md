@@ -28,8 +28,12 @@ We built the engine for FFT. Now we load different cartridges.
 ## Quick Start
 
 ```python
-import sys
-sys.path.insert(0, 'experiments/matmul')
+"""Run this from the repo root with:
+
+  PYTHONPATH=experiments/matmul python -c '<snippet>'
+
+so `butterfly_matmul` can be imported without modifying sys.path in code.
+"""
 
 from butterfly_matmul import identity_butterfly, hadamard_butterfly
 import numpy as np

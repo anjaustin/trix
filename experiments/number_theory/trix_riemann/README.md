@@ -248,7 +248,7 @@ At t = 10^16:
 | FFT error vs torch.fft | < 1e-5 | ✓ Achieved |
 | Z(t) at known zeros | < 0.01 | ✗ ~0.5 (small t) |
 | Zero detection rate | > 95% | 85-90% |
-| Count vs Riemann-von Mangoldt | > 99% | TBD |
+| Count vs Riemann-von Mangoldt | > 99% | Not measured |
 
 ### Performance Targets
 

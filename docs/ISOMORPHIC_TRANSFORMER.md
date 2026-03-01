@@ -107,8 +107,13 @@ class IsomorphicBlock(nn.Module):
 ## Usage
 
 ```python
-import sys
-sys.path.insert(0, 'experiments/isomorphic')
+"""Run this from the repo root with:
+
+  PYTHONPATH=experiments/isomorphic python -c '<snippet>'
+
+so `isomorphic_transformer` can be imported without modifying sys.path in code.
+"""
+
 from isomorphic_transformer import IsomorphicTransformer
 
 model = IsomorphicTransformer(

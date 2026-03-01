@@ -176,10 +176,10 @@ assert digits[:20] == "14159265358979323846"
 nohup ./run_granville.sh &
 
 # Monitor progress
-tail -f /workspace/trix_latest/results/granville/output.log
+tail -f results/granville/output.log
 
 # Check results
-cat /workspace/trix_latest/results/granville/results_*.json
+cat results/granville/results_*.json
 ```
 
 ---

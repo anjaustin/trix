@@ -177,7 +177,13 @@ print(f"Verified: {result.verified}")
 TriX can compile signal processing transforms:
 
 ```python
-sys.path.insert(0, 'experiments/fft_atoms')
+"""Run this from the repo root with:
+
+  PYTHONPATH=experiments/fft_atoms python -c '<snippet>'
+
+so `fft_compiler` can be imported without modifying sys.path in code.
+"""
+
 from fft_compiler import compile_fft_routing, CompiledWHT
 
 # Compile WHT for N=8
@@ -197,7 +203,7 @@ y = wht.execute(x)
 print(f"Input:  {x}")
 print(f"Output: {y}")
 
-# Verify against scipy
+# Verify against scipy (optional dependency)
 from scipy.linalg import hadamard
 import numpy as np
 
@@ -224,7 +230,11 @@ The routing is compiled to FP4 neural circuits!
 The same structure that computes FFT can compute matrix operations:
 
 ```python
-sys.path.insert(0, 'experiments/matmul')
+"""Run this from the repo root with:
+
+  PYTHONPATH=experiments/matmul python -c '<snippet>'
+"""
+
 from butterfly_matmul import identity_butterfly, hadamard_butterfly
 
 # Identity matrix via butterfly
@@ -259,7 +269,11 @@ Both:   Route → Local   → Route → Local   → ...
 TriX can replace both attention and MLP with structured operations:
 
 ```python
-sys.path.insert(0, 'experiments/isomorphic')
+"""Run this from the repo root with:
+
+  PYTHONPATH=experiments/isomorphic python -c '<snippet>'
+"""
+
 from isomorphic_transformer import IsomorphicTransformer
 
 # Create model

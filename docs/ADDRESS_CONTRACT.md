@@ -108,6 +108,8 @@ Optional fields (v1 extensions):
 - `fallback_applied` (bool)
 - `fallback_reason` (string)
 - `tie_break` (string) : `first` | `hash`
+- `routing_backend` (string)
+- `signature_compression` (object|null) : optional compression stats snapshot
 
 ### Example Records
 
