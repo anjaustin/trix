@@ -183,6 +183,25 @@ Deliverables:
 Requirements:
 - R10: A new reader can run `pip install -e ".[dev]" && pytest` on supported platforms and get green.
 
+### WS7: BitNet b1.58-Inspired Quantization Path (Ternary + Scales)
+
+Goal: extract the most reusable ideas from BitNet-style b1.58 work and apply them to TriX in a way that preserves correctness and improves stability/perf.
+
+Deliverables:
+- Weight scaling as a first-class artifact:
+  - compute per-row (or per-tile) `alpha` scales and pair them with ternary-packed weights
+  - make `alpha` exportable/importable and validate native-vs-reference equivalence
+- Optional activation quantization for routing stability:
+  - int8 quantize/dequantize of routing inputs (explicitly opt-in)
+  - measure impact on tie/near-tie rates, margins, and churn
+- Zero-rate as an explicit objective:
+  - regularizers and/or training recipes that intentionally increase zeros (to realize compression benefits)
+- Benchmarks:
+  - add a small benchmark variant comparing baseline vs `alpha`-scaled ternary packing and routing churn
+
+Non-goals:
+- Claiming universal accuracy improvements; we require benchmark evidence.
+
 ## 8. Milestones
 
 M0: Baseline hygiene (done/ongoing)
@@ -208,6 +227,10 @@ M6 (Mesa 14): Address Space Mesa
 - Normalize telemetry across routing backends (backend name, tie/near-tie, margins, compression stats snapshot, contract hit/miss/fallback).
 - Make contract lifecycle explicit: validate -> ship -> monitor -> invalidate/rebuild.
 - Promote drift-under-optimization to a first-class benchmark artifact (churn curve + contract hit-rate curve).
+
+M7: BitNet-Style Alpha Scales (b1.58 nugget)
+- Add a supported API for ternary packing paired with per-row `alpha` scales.
+- Enforce native-vs-reference equivalence for pack/unpack/forward with `alpha`.
 
 ## 9. Metrics
 

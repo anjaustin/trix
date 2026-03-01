@@ -201,6 +201,38 @@ def pack_weights(weights: torch.Tensor) -> torch.Tensor:
     return packed
 
 
+def pack_weights_with_alpha(
+    weights: torch.Tensor,
+    *,
+    threshold: float = 0.5,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """BitNet-style ternary packing paired with per-row alpha scales.
+
+    Returns:
+        packed: uint8 packed ternary codes
+        scales: float32 per-row alpha scale
+        ternary: float32 quantized weights in {-1,0,+1}
+
+    Notes:
+    - Quantization uses the same ternary thresholds as the native kernel.
+    - alpha is computed as mean(abs(w_row)) over all columns (including zeros).
+    """
+
+    if weights.dim() != 2:
+        raise ValueError("weights must be 2D [rows, cols]")
+
+    w = weights.detach().to(torch.float32).contiguous()
+    ternary = torch.zeros_like(w)
+    ternary[w > float(threshold)] = 1.0
+    ternary[w < -float(threshold)] = -1.0
+
+    # Per-row alpha (BitNet-inspired).
+    scales = w.abs().mean(dim=1).contiguous()
+
+    packed = pack_weights(ternary)
+    return packed, scales, ternary
+
+
 def unpack_weights(packed: torch.Tensor, rows: int, cols: int) -> torch.Tensor:
     """
     Unpack 2-bit weights back to float32.
