@@ -173,6 +173,7 @@ def _export_bundle(args: argparse.Namespace) -> int:
 
 def _load_bundle(args: argparse.Namespace) -> int:
     from trix.nn.bundle import load_address_bundle, validate_compiled_semantics
+    from trix.nn.integrity import check_bundle_compatibility, verify_manifest
 
     bundle, ffn, compiled = load_address_bundle(outdir=args.outdir, device=args.device)
     _print_kv("bundle", str(bundle.outdir))
@@ -183,6 +184,26 @@ def _load_bundle(args: argparse.Namespace) -> int:
         bool(bundle.state_dict_path and bundle.state_dict_path.exists()),
     )
     _print_kv("has_dispatch", compiled is not None)
+
+    if args.validate:
+        crep = check_bundle_compatibility(Path(args.outdir))
+        _print_kv("compatible", crep.compatible)
+        if crep.warnings:
+            _print_kv("compat_warnings", crep.warnings)
+        if crep.errors:
+            _print_kv("compat_errors", crep.errors)
+            print("FAIL")
+            return 2
+
+        mpath = Path(args.outdir) / "manifest.json"
+        if mpath.exists():
+            mok, merrs = verify_manifest(Path(args.outdir))
+            _print_kv("manifest_ok", mok)
+            if merrs:
+                _print_kv("manifest_errors", merrs)
+            if not mok:
+                print("FAIL")
+                return 2
 
     if args.validate and compiled is not None:
         rep = validate_compiled_semantics(
@@ -224,6 +245,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     pl.add_argument("--device", default=None)
     pl.add_argument("--validate", action="store_true")
 
+    pbun = sub.add_parser("bundle", help="bundle integrity utilities")
+    bun = pbun.add_subparsers(dest="bundle_cmd", required=True)
+    bman = bun.add_parser("manifest", help="generate manifest.json")
+    bman.add_argument("--outdir", required=True)
+    bver = bun.add_parser("verify", help="verify manifest.json")
+    bver.add_argument("--outdir", required=True)
+
+    pd = sub.add_parser("drift", help="drift policy checks")
+    dsub = pd.add_subparsers(dest="drift_cmd", required=True)
+    dchk = dsub.add_parser("check", help="check policy against suite json")
+    dchk.add_argument("--suite", required=True, help="path to suite_v1.json")
+    dchk.add_argument("--policy", required=True, help="path to drift policy json")
+
     args = p.parse_args(argv)
 
     if args.cmd == "doctor":
@@ -234,6 +268,37 @@ def main(argv: Optional[list[str]] = None) -> int:
         return _export_bundle(args)
     if args.cmd == "load-bundle":
         return _load_bundle(args)
+
+    if args.cmd == "bundle":
+        from trix.nn.integrity import generate_manifest, verify_manifest
+
+        outdir = Path(args.outdir)
+        if args.bundle_cmd == "manifest":
+            try:
+                generate_manifest(outdir)
+            except Exception as e:
+                print(f"FAIL: {e}")
+                return 2
+            print("OK")
+            return 0
+        if args.bundle_cmd == "verify":
+            ok, errs = verify_manifest(outdir)
+            if not ok:
+                print("FAIL")
+                for e in errs:
+                    print(f"- {e}")
+                return 2
+            print("OK")
+            return 0
+
+    if args.cmd == "drift":
+        from trix.nn.integrity import load_drift_policy, evaluate_drift_policy_on_suite
+
+        if args.drift_cmd == "check":
+            pol = load_drift_policy(Path(args.policy))
+            ok, rep = evaluate_drift_policy_on_suite(Path(args.suite), pol)
+            print(json.dumps(rep, indent=2, sort_keys=True))
+            return 0 if ok else 2
 
     return 2
 

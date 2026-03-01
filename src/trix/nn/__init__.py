@@ -80,6 +80,10 @@ from .dropin import (
     DropInConfig,
 )
 
+from .policy import (
+    AddressPolicyV1,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -116,6 +120,8 @@ __all__ = [
     # Drop-in
     "DropInFFN",
     "DropInConfig",
+    # Runtime policy
+    "AddressPolicyV1",
     # Temporal Tiles (Mesa 4)
     "TemporalTileLayer",
     "TemporalTileStack",

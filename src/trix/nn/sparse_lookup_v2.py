@@ -531,6 +531,7 @@ class SparseLookupFFNv2(nn.Module):
         self,
         x: torch.Tensor,
         labels: Optional[torch.Tensor] = None,  # For claim tracking
+        tile_policy: Optional["AddressPolicyV1"] = None,
     ) -> Tuple[torch.Tensor, Dict, Dict]:
         """
         Forward pass with optional claim tracking.
@@ -562,6 +563,16 @@ class SparseLookupFFNv2(nn.Module):
 
         # Route
         tile_idx, scores = self.route(x_flat, signatures, return_scores=True)
+
+        policy_info: Dict[str, object] = {}
+        if tile_policy is not None:
+            tile_idx, policy_info = self._enforce_tile_policy(
+                x_flat=x_flat,
+                signatures=signatures,
+                tile_idx=tile_idx,
+                policy=tile_policy,
+                backend=self.routing_backend,
+            )
 
         # Compress
         compressed = self.compress(x_flat)
@@ -602,11 +613,93 @@ class SparseLookupFFNv2(nn.Module):
             "compressed": compressed.view(B, T, 2),
             "routing_backend": self.routing_backend,
         }
+        routing_info.update(policy_info)
 
         # Compute all losses
         aux_losses = self._compute_aux_losses(tile_idx, B * T)
 
         return output, routing_info, aux_losses
+
+    def _enforce_tile_policy(
+        self,
+        *,
+        x_flat: torch.Tensor,
+        signatures: torch.Tensor,
+        tile_idx: torch.Tensor,
+        policy: "AddressPolicyV1",
+        backend: str,
+    ) -> Tuple[torch.Tensor, Dict[str, object]]:
+        """Apply allow/deny rules to routed tile indices.
+
+        If the route selects a disallowed tile and policy.on_violation is
+        "fallback", this attempts to reroute to the best allowed tile.
+        """
+
+        # Local import to avoid a hard dependency for callers that don't use policy.
+        from .policy import AddressPolicyV1
+
+        if not isinstance(policy, AddressPolicyV1):
+            raise TypeError("tile_policy must be an AddressPolicyV1")
+
+        allowed = torch.ones(self.num_tiles, dtype=torch.bool, device=tile_idx.device)
+        if policy.allow_tiles is not None:
+            allowed.zero_()
+            for t in policy.allow_tiles:
+                ti = int(t)
+                if 0 <= ti < self.num_tiles:
+                    allowed[ti] = True
+        for t in policy.deny_tiles:
+            ti = int(t)
+            if 0 <= ti < self.num_tiles:
+                allowed[ti] = False
+
+        if not bool(allowed.any().item()):
+            raise RuntimeError("policy denies all tiles")
+
+        disallowed = ~allowed[tile_idx]
+        num_viol = int(disallowed.sum().item())
+        if num_viol == 0:
+            return tile_idx, {
+                "policy_violation_rate": 0.0,
+                "policy_num_violations": 0,
+                "policy_fallback_applied": False,
+                "policy_on_violation": policy.on_violation,
+            }
+
+        if policy.on_violation == "fail":
+            raise RuntimeError("policy violation: disallowed tile selected")
+
+        # Fallback/reroute: compute best allowed tile.
+        if backend == "flat_popcount":
+            from .xor_superposition import (
+                pack_ternary_to_uint8,
+                popcount_distance_packed,
+            )
+
+            x_tern = torch.sign(x_flat)
+            px = pack_ternary_to_uint8(x_tern)
+            ps = self._get_packed_signatures(signatures)
+            dist = popcount_distance_packed(px, ps, ignore_x_zeros=True)
+
+            # Mask out disallowed tiles by setting distance very large.
+            big = int(dist.max().item()) + 1
+            dist = dist.masked_fill(~allowed[None, :], big)
+            reroute = dist.argmin(dim=-1)
+        else:
+            # Default to dot-product scores.
+            scores_full = x_flat @ signatures.T
+            scores_full = scores_full.masked_fill(~allowed[None, :], -1.0e30)
+            reroute = scores_full.argmax(dim=-1)
+
+        out = tile_idx.clone()
+        out[disallowed] = reroute[disallowed]
+
+        return out, {
+            "policy_violation_rate": float(num_viol) / float(tile_idx.numel()),
+            "policy_num_violations": num_viol,
+            "policy_fallback_applied": True,
+            "policy_on_violation": policy.on_violation,
+        }
 
     def forward_forced_tile(
         self,

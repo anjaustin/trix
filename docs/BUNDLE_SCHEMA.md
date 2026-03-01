@@ -19,6 +19,7 @@ Optional:
 - `dispatch_table.json`
 - `validation.json`
 - `state_dict.pt`
+- `manifest.json` (Mesa 15 integrity)
 
 ## bundle.json
 
@@ -63,3 +64,29 @@ The `meta.schema_version` controls compatibility.
 
 - Export: `trix export-bundle ...`
 - Load/validate: `trix load-bundle --outdir <dir> --validate`
+
+## manifest.json (Mesa 15)
+
+`manifest.json` enables tamper detection and lightweight reproducibility checks.
+
+Fields (v1):
+
+```json
+{
+  "manifest_version": 1,
+  "bundle_schema_version": 1,
+  "created_at": "2026-03-01T00:00:00+00:00",
+  "trix_version": "0.12.0",
+  "file_hashes": {
+    "bundle.json": "<sha256>",
+    "compressed_signatures.json": "<sha256>",
+    "dispatch_table.json": "<sha256>",
+    "validation.json": "<sha256>",
+    "state_dict.pt": "<sha256>"
+  },
+  "config_fingerprint": "<sha256(json(config))>",
+  "address_plane_fingerprint": "<sha256(json(compressed_signatures))>",
+  "contract_fingerprint": "<sha256(json(dispatch_table))>",
+  "validation_fingerprint": "<sha256(json(validation))>"
+}
+```

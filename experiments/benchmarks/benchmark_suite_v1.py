@@ -516,6 +516,91 @@ def _bench_drift_under_regularizer_training(
     }
 
 
+def _bench_bundle_verify_time(*, outdir: Path) -> Dict[str, Any]:
+    """Microbench: manifest verification time."""
+
+    _ensure_imports()
+    from trix.nn import SparseLookupFFNv2
+    from trix.nn.bundle import export_address_bundle
+    from trix.nn.integrity import verify_manifest
+
+    ffn = SparseLookupFFNv2(
+        d_model=32,
+        num_tiles=8,
+        tiles_per_cluster=4,
+        dropout=0.0,
+        use_score_calibration=False,
+    )
+
+    bdir = outdir / "bench_bundle_verify"
+    export_address_bundle(ffn=ffn, outdir=bdir, include_state_dict=False)
+
+    t0 = time.perf_counter()
+    ok, errs = verify_manifest(bdir)
+    dt = time.perf_counter() - t0
+
+    total_bytes = 0
+    num_files = 0
+    for p in bdir.glob("*"):
+        if p.is_file():
+            num_files += 1
+            total_bytes += p.stat().st_size
+
+    return {
+        "name": "bundle_verify_time",
+        "ok": bool(ok),
+        "errors": errs,
+        "metrics": {
+            "verify_ms": float(dt * 1000.0),
+            "num_files": int(num_files),
+            "total_bytes": int(total_bytes),
+        },
+        "artifacts": {"bundle_dir": str(bdir)},
+    }
+
+
+def _bench_policy_enforcement_micro(*, device: str) -> Dict[str, Any]:
+    """Microbench: policy fallback overhead on compiled dispatch."""
+
+    _ensure_imports()
+    from trix.nn import SparseLookupFFNv2
+    from trix.nn.compiled_dispatch import CompiledDispatch
+    from trix.nn.policy import AddressPolicyV1
+
+    dev = torch.device(device)
+    ffn = SparseLookupFFNv2(
+        d_model=32,
+        num_tiles=8,
+        tiles_per_cluster=4,
+        dropout=0.0,
+        use_score_calibration=False,
+    ).to(dev)
+
+    compiled = CompiledDispatch(ffn)
+    compiled.compile(class_id=0, tile_idx=0, min_confidence=0.0)
+
+    policy = AddressPolicyV1.from_lists(deny_tiles=[0], on_violation="fallback")
+    x = torch.randn(8, 16, 32, device=dev)
+
+    iters = 200
+    with torch.no_grad():
+        # Warmup
+        for _ in range(10):
+            compiled.forward(x, class_hint=0, confidence=1.0, tile_policy=policy)
+
+        t0 = time.perf_counter()
+        for _ in range(iters):
+            compiled.forward(x, class_hint=0, confidence=1.0, tile_policy=policy)
+        dt = time.perf_counter() - t0
+
+    return {
+        "name": "policy_enforcement_micro",
+        "ok": True,
+        "config": {"device": str(dev), "iters": int(iters)},
+        "metrics": {"avg_ms": float((dt * 1000.0) / max(1, iters))},
+    }
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--outdir", default="results/benchmarks_v1")
@@ -549,6 +634,8 @@ def main() -> int:
             seed=int(args.seed), device=str(args.device), outdir=outdir
         )
     )
+    suite["benchmarks"].append(_bench_bundle_verify_time(outdir=outdir))
+    suite["benchmarks"].append(_bench_policy_enforcement_micro(device=str(args.device)))
     suite["timing_s"] = {"total": time.perf_counter() - t0}
 
     ok = all(bool(b.get("ok")) for b in suite["benchmarks"])

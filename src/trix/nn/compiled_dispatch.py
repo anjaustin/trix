@@ -248,6 +248,7 @@ class CompiledDispatch(nn.Module):
         class_hint: Optional[int] = None,
         confidence: float = 1.0,
         labels: Optional[torch.Tensor] = None,
+        tile_policy: Optional["AddressPolicyV1"] = None,
     ) -> Tuple[torch.Tensor, Dict, Dict]:
         """
         Forward pass with compiled dispatch.
@@ -265,19 +266,36 @@ class CompiledDispatch(nn.Module):
         """
         # Check if we can use compiled path
         guard_failed = False
+        policy_violation = False
         if class_hint is not None and class_hint in self.dispatch:
             entry = self.dispatch[class_hint]
 
             if entry.passes_guard(confidence):
-                # COMPILED EXECUTION
-                output, routing_info, aux_losses = self._execute_compiled(x, entry)
-                routing_info["compiled"] = True
-                routing_info["compiled_class"] = class_hint
+                if tile_policy is not None:
+                    # Local import to avoid hard dependency.
+                    from .policy import AddressPolicyV1
 
-                self.compiled_hits += 1
-                self.class_hits[class_hint] = self.class_hits.get(class_hint, 0) + 1
+                    if not isinstance(tile_policy, AddressPolicyV1):
+                        raise TypeError("tile_policy must be an AddressPolicyV1")
+                    if not tile_policy.is_allowed(int(entry.tile_idx)):
+                        # Treat policy violation like a guard failure: fallback to dynamic.
+                        self.compiled_misses += 1
+                        guard_failed = True
+                        policy_violation = True
+                    else:
+                        policy_violation = False
 
-                return output, routing_info, aux_losses
+                if not guard_failed:
+                    # COMPILED EXECUTION
+                    output, routing_info, aux_losses = self._execute_compiled(x, entry)
+                    routing_info["compiled"] = True
+                    routing_info["compiled_class"] = class_hint
+                    routing_info["policy_violation"] = False
+
+                    self.compiled_hits += 1
+                    self.class_hits[class_hint] = self.class_hits.get(class_hint, 0) + 1
+
+                    return output, routing_info, aux_losses
             else:
                 # Guard failed - will use dynamic but track as miss
                 self.compiled_misses += 1
@@ -288,9 +306,18 @@ class CompiledDispatch(nn.Module):
             # Only count as dynamic if we didn't have a compiled path at all
             self.dynamic_calls += 1
 
-        output, routing_info, aux_losses = self.ffn(x, labels=labels)
+        # DYNAMIC EXECUTION (either no compiled entry, guard failed, or policy violation)
+        try:
+            output, routing_info, aux_losses = self.ffn(
+                x, labels=labels, tile_policy=tile_policy
+            )
+        except TypeError:
+            output, routing_info, aux_losses = self.ffn(x, labels=labels)
         routing_info["compiled"] = False
         routing_info["guard_failed"] = guard_failed
+        if policy_violation:
+            routing_info["policy_violation"] = True
+            routing_info["policy_reason"] = "compiled_tile_denied"
 
         return output, routing_info, aux_losses
 

@@ -15,6 +15,9 @@ This index points you to the highest-signal docs first.
 - `docs/BENCHMARKS.md` (canonical benchmark entrypoints)
 - `docs/CLI.md` (doctor/bench/bundle commands)
 - `docs/BUNDLE_SCHEMA.md` (bundle format and compatibility)
+- `docs/DRIFT_POLICY.md` (Mesa 15 drift policy schema + evaluation)
+- `docs/RUNTIME_POLICY.md` (Mesa 15 allow/deny enforcement)
+- `docs/ADDRESS_ABI.md` (minimal tile/subroutine ABI)
 - `docs/FUTURE_DEVELOPMENT_PLAN.md` (reachable use cases and next steps)
 
 ## Routing As A Primitive (Engineering)

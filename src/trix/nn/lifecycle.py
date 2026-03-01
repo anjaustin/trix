@@ -155,8 +155,15 @@ class RoutingLifecycleV1:
             # Telemetry should not break inference.
             pass
 
-        fallback_applied = bool(routing_info.get("guard_failed", False))
-        fallback_reason = "compiled_guard_failed" if fallback_applied else None
+        guard_failed = bool(routing_info.get("guard_failed", False))
+        policy_fallback = bool(routing_info.get("policy_fallback_applied", False))
+        fallback_applied = guard_failed or policy_fallback
+        if guard_failed:
+            fallback_reason = "compiled_guard_failed"
+        elif policy_fallback:
+            fallback_reason = "policy_fallback"
+        else:
+            fallback_reason = None
 
         record = {
             "schema_version": 1,
@@ -176,6 +183,13 @@ class RoutingLifecycleV1:
             "fallback_applied": fallback_applied,
             "fallback_reason": fallback_reason,
             "compiled": bool(routing_info.get("compiled", False)),
+            "policy_violation": bool(routing_info.get("policy_violation", False))
+            or bool(routing_info.get("policy_num_violations", 0)),
+            "policy_violation_rate": routing_info.get("policy_violation_rate"),
+            "policy_num_violations": routing_info.get("policy_num_violations"),
+            "policy_fallback_applied": routing_info.get("policy_fallback_applied"),
+            "policy_on_violation": routing_info.get("policy_on_violation"),
+            "policy_reason": routing_info.get("policy_reason"),
             "routing_backend": routing_info.get("routing_backend"),
         }
 

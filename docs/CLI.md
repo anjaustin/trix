@@ -60,3 +60,20 @@ Load and validate:
 ```bash
 trix load-bundle --outdir bundle_dir --validate
 ```
+
+When `--validate` is set, `load-bundle` also:
+- prints a Mesa 15 compatibility report
+- verifies `manifest.json` if present
+
+Integrity:
+
+```bash
+trix bundle manifest --outdir bundle_dir
+trix bundle verify --outdir bundle_dir
+```
+
+Drift policy check (against a suite output):
+
+```bash
+trix drift check --suite results/benchmarks_v1/suite_v1.json --policy drift_policy.json
+```

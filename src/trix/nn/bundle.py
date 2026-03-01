@@ -23,6 +23,7 @@ import torch
 from .compiled_dispatch import CompiledDispatch
 from .sparse_lookup_v2 import SparseLookupFFNv2
 from .xor_superposition import CompressedSignatures
+from .integrity import generate_manifest
 
 
 def _write_json(path: Path, obj: Dict[str, Any]) -> None:
@@ -105,6 +106,13 @@ def export_address_bundle(
         },
     }
     _write_json(out / "bundle.json", bundle_json)
+
+    # Mesa 15: always generate a manifest for tamper detection.
+    try:
+        generate_manifest(out)
+    except Exception:
+        # Do not fail export for manifest issues.
+        pass
 
     return AddressBundle(
         outdir=out,
