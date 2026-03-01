@@ -13,29 +13,29 @@ Features:
 
 Quick Start - Drop-in FFN Replacement:
     from trix import HierarchicalTriXFFN
-    
+
     # Replace your FFN with TriX (includes residual + normalization)
     ffn = HierarchicalTriXFFN(
         d_model=512,
         num_tiles=16,          # More tiles = more specialists
         tiles_per_cluster=4,   # Tiles per routing cluster
     )
-    
+
     # Use like any PyTorch module
     output, routing_info, aux_losses = ffn(x)
-    
+
     # Training: add aux_losses to your loss
     loss = task_loss + aux_losses['total_aux']
 
 Simple 4-Tile Version:
     from trix import SparseTriXFFN
-    
+
     ffn = SparseTriXFFN(d_model=512, num_tiles=4)
     output, gate, aux = ffn(x)
 
 Full Transformer Block:
     from trix import HierarchicalTriXBlock
-    
+
     block = HierarchicalTriXBlock(
         d_model=512,
         n_heads=8,
@@ -51,7 +51,7 @@ Core Principle:
     Sparsity enables speed.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.12.0"
 
 # =============================================================================
 # RECOMMENDED: Hierarchical Content-Addressable Memory (The Big Leap)
@@ -59,9 +59,9 @@ __version__ = "0.4.0"
 
 from .nn import (
     # The main components - use these
-    HierarchicalTriXFFN,    # FFN with 2-level hierarchical routing
+    HierarchicalTriXFFN,  # FFN with 2-level hierarchical routing
     HierarchicalTriXBlock,  # Full transformer block
-    TriXTile,               # Individual 2-bit specialist
+    TriXTile,  # Individual 2-bit specialist
 )
 
 # =============================================================================
@@ -69,9 +69,9 @@ from .nn import (
 # =============================================================================
 
 from .nn import (
-    SparseLookupFFN,        # Routing selects direction, spline selects magnitude
-    SparseLookupBlock,      # Full transformer block with SparseLookup
-    TernarySpline2D,        # 2D spline with ternary coefficients
+    SparseLookupFFN,  # Routing selects direction, spline selects magnitude
+    SparseLookupBlock,  # Full transformer block with SparseLookup
+    TernarySpline2D,  # 2D spline with ternary coefficients
 )
 
 # =============================================================================
@@ -79,7 +79,7 @@ from .nn import (
 # =============================================================================
 
 from .nn import (
-    SparseTriXFFN,    # Simple sparse FFN
+    SparseTriXFFN,  # Simple sparse FFN
     SparseTriXBlock,  # Simple transformer block
 )
 
@@ -98,11 +98,11 @@ from .nn import (
 # =============================================================================
 
 from .kernel import (
-    TriXLinear,       # Base ternary linear layer
-    STESign,          # Straight-through estimator for sign()
-    pack_weights,     # Pack to 2-bit
-    unpack_weights,   # Unpack from 2-bit
-    trix_forward,     # NEON-accelerated forward
+    TriXLinear,  # Base ternary linear layer
+    STESign,  # Straight-through estimator for sign()
+    pack_weights,  # Pack to 2-bit
+    unpack_weights,  # Unpack from 2-bit
+    trix_forward,  # NEON-accelerated forward
     is_neon_available,
 )
 
@@ -131,26 +131,21 @@ from .nn import (
 __all__ = [
     # Version
     "__version__",
-    
     # Recommended - Hierarchical (The Big Leap)
     "HierarchicalTriXFFN",
-    "HierarchicalTriXBlock", 
+    "HierarchicalTriXBlock",
     "TriXTile",
-    
     # New - Sparse Lookup (Routing IS Computation)
     "SparseLookupFFN",
     "SparseLookupBlock",
     "TernarySpline2D",
-    
     # Simple - Sparse Training
     "SparseTriXFFN",
     "SparseTriXBlock",
-    
     # Classic - Emergent Routing
     "TriXFFN",
     "TriXBlock",
     "TriXStack",
-    
     # Core - Kernel
     "TriXLinear",
     "STESign",
@@ -158,14 +153,12 @@ __all__ = [
     "unpack_weights",
     "trix_forward",
     "is_neon_available",
-    
     # Training - QAT
     "TernaryQuantizer",
     "SoftTernaryQuantizer",
     "TriXLinearQAT",
     "progressive_quantization_schedule",
     "QATTrainer",
-    
     # Legacy - Learned Routing
     "Top1Gate",
     "GatedFFN",
