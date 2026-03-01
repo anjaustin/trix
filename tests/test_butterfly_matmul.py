@@ -7,6 +7,9 @@ Verifies:
 2. Identity and Hadamard are exact (0.00 error)
 3. Structure matches our FFT/WHT implementations
 4. Ternary blocks enumerate correctly
+
+Note: This file depends on experiment code under experiments/matmul and
+experiments/fft_atoms. All tests are skipped if those modules are unavailable.
 """
 
 import sys
@@ -19,6 +22,14 @@ sys.path.insert(0, str(_ROOT / "experiments" / "matmul"))
 
 import pytest
 import numpy as np
+
+# Skip entire module if experiment dependencies are missing.
+butterfly_matmul = pytest.importorskip(
+    "butterfly_matmul", reason="requires experiments/matmul"
+)
+fft_compiler = pytest.importorskip(
+    "fft_compiler", reason="requires experiments/fft_atoms"
+)
 
 scipy = pytest.importorskip("scipy")
 hadamard = scipy.linalg.hadamard

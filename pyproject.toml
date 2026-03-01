@@ -34,8 +34,12 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
 ]
+experiments = [
+    "gmpy2>=2.1.0",
+]
 all = [
     "trix[dev]",
+    "trix[experiments]",
 ]
 
 [project.urls]
@@ -60,6 +64,7 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 markers = [
     "slow: slow or exhaustive tests",
+    "experiment: tests that depend on code under experiments/ (skipped if unavailable)",
 ]
 
 [tool.coverage.run]

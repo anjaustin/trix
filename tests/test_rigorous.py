@@ -9,6 +9,9 @@ Every test is:
 - Documented with what it proves
 
 Run with: pytest tests/test_rigorous.py -v
+
+Note: Tests in Sections 3-6 depend on experiment code under experiments/fft_atoms
+and experiments/matmul. They are skipped gracefully if unavailable.
 """
 
 import sys
@@ -17,11 +20,34 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT / "src"))
 sys.path.insert(0, str(_ROOT / "experiments" / "fft_atoms"))
+sys.path.insert(0, str(_ROOT / "experiments" / "matmul"))
 
 import pytest
 import numpy as np
 import torch
 from itertools import product
+
+# Try to import experiment modules; skip dependent tests if unavailable.
+try:
+    import fft_compiler as _fft_compiler  # noqa: F401
+
+    _HAS_FFT_COMPILER = True
+except ImportError:
+    _HAS_FFT_COMPILER = False
+
+try:
+    import butterfly_matmul as _butterfly_matmul  # noqa: F401
+
+    _HAS_BUTTERFLY = True
+except ImportError:
+    _HAS_BUTTERFLY = False
+
+_skip_fft = pytest.mark.skipif(
+    not _HAS_FFT_COMPILER, reason="requires experiments/fft_atoms"
+)
+_skip_butterfly = pytest.mark.skipif(
+    not _HAS_BUTTERFLY, reason="requires experiments/matmul"
+)
 
 
 # =============================================================================
@@ -252,6 +278,7 @@ class TestAdderExhaustive:
 # =============================================================================
 
 
+@_skip_fft
 class TestWHTExhaustive:
     """
     Verify Walsh-Hadamard Transform.
@@ -311,6 +338,7 @@ class TestWHTExhaustive:
                 np.testing.assert_array_almost_equal(recovered, x)
 
 
+@_skip_fft
 class TestDFTExhaustive:
     """
     Verify Discrete Fourier Transform with twiddle opcodes.
@@ -457,6 +485,7 @@ class TestAtomComposition:
 # =============================================================================
 
 
+@_skip_fft
 class TestEdgeCases:
     """
     Test behavior on edge cases and adversarial inputs.
@@ -527,6 +556,7 @@ class TestEdgeCases:
 # =============================================================================
 
 
+@_skip_fft
 class TestNumericalStability:
     """
     Test numerical behavior with extreme values.
@@ -703,7 +733,8 @@ class TestAtomComposition:
         assert len(errors) == 0, f"4-bit adder failed on {len(errors)} cases"
 
 
-class TestEdgeCases:
+@_skip_fft
+class TestEdgeCases2:
     """
     Test edge cases and boundary conditions.
 
