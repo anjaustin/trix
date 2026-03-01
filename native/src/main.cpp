@@ -23,6 +23,13 @@ struct Args {
   std::optional<std::string> jsonl;
 };
 
+static std::string make_run_id(const Args& args) {
+  std::ostringstream oss;
+  oss << "native-" << args.benchmark << "-t" << args.tiles << "-d" << args.dim << "-n" << args.inputs
+      << "-s" << args.seed;
+  return oss.str();
+}
+
 static void usage(const char* argv0) {
   std::cerr
       << "Usage: " << argv0
@@ -129,6 +136,8 @@ int main(int argc, char** argv) {
     writer.emplace(*args.jsonl);
   }
 
+  const std::string run_id = make_run_id(args);
+
   auto t0 = std::chrono::steady_clock::now();
   std::vector<int> routes0 = trix_native::route_argmax(cfg, signatures.data(), inputs.data(), args.inputs);
   auto t1 = std::chrono::steady_clock::now();
@@ -144,11 +153,14 @@ int main(int argc, char** argv) {
 
     if (writer.has_value()) {
       writer->write_kv({
+          {"schema_version", "1"},
           {"event", json_string("routing")},
+          {"run_id", json_string(run_id)},
           {"tiles", std::to_string(cfg.tiles)},
           {"dim", std::to_string(cfg.dim)},
           {"inputs", std::to_string(args.inputs)},
           {"seed", std::to_string(args.seed)},
+          {"address_type", json_string("tile_id")},
           {"routing_ms", json_number(ms)},
           {"routes_per_s", json_number(routes_per_s)},
           {"entropy_nats", json_number(um.entropy_nats)},
@@ -172,11 +184,14 @@ int main(int argc, char** argv) {
 
     if (writer.has_value()) {
       writer->write_kv({
+          {"schema_version", "1"},
           {"event", json_string("stability")},
+          {"run_id", json_string(run_id)},
           {"tiles", std::to_string(cfg.tiles)},
           {"dim", std::to_string(cfg.dim)},
           {"inputs", std::to_string(args.inputs)},
           {"seed", std::to_string(args.seed)},
+          {"address_type", json_string("tile_id")},
           {"flip_prob", json_number(args.flip_prob)},
           {"routing_ms", json_number(ms)},
           {"routes_per_s", json_number(routes_per_s)},

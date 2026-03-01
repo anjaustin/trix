@@ -19,4 +19,6 @@ UsageMetrics usage_metrics(const std::vector<int>& routes, int tiles);
 
 double route_churn_rate(const std::vector<int>& a, const std::vector<int>& b);
 
+double route_agreement_rate(const std::vector<int>& a, const std::vector<int>& b);
+
 }  // namespace trix_native

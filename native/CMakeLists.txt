@@ -27,11 +27,18 @@ target_include_directories(trix_routebench PRIVATE src)
 
 include(CTest)
 if(BUILD_TESTING)
-  add_executable(trix_native_tests
+  add_executable(trix_native_metrics_tests
     tests/test_metrics.cpp
+    src/metrics.cpp
+  )
+  target_include_directories(trix_native_metrics_tests PRIVATE src)
+  add_test(NAME trix_native_metrics_tests COMMAND trix_native_metrics_tests)
+
+  add_executable(trix_native_routing_tests
+    tests/test_routing_invariants.cpp
     src/routing.cpp
     src/metrics.cpp
   )
-  target_include_directories(trix_native_tests PRIVATE src)
-  add_test(NAME trix_native_tests COMMAND trix_native_tests)
+  target_include_directories(trix_native_routing_tests PRIVATE src)
+  add_test(NAME trix_native_routing_tests COMMAND trix_native_routing_tests)
 endif()

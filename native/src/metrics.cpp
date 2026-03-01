@@ -85,4 +85,15 @@ double route_churn_rate(const std::vector<int>& a, const std::vector<int>& b) {
   return static_cast<double>(diff) / static_cast<double>(a.size());
 }
 
+double route_agreement_rate(const std::vector<int>& a, const std::vector<int>& b) {
+  if (a.size() != b.size()) throw std::invalid_argument("route vectors differ in size");
+  if (a.empty()) return 1.0;
+
+  int64_t same = 0;
+  for (size_t i = 0; i < a.size(); i++) {
+    same += (a[i] == b[i]) ? 1 : 0;
+  }
+  return static_cast<double>(same) / static_cast<double>(a.size());
+}
+
 }  // namespace trix_native
