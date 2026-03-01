@@ -35,4 +35,10 @@ Optional (if `telemetry.jsonl` exists and contains routing events):
 trix drift check --suite results/benchmarks_v1/suite_v1.json --policy drift_policy.json
 ```
 
+Starter policy:
+
+```bash
+trix drift policy init > drift_policy.json
+```
+
 The command prints a JSON report and exits non-zero if the policy is violated.

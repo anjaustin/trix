@@ -176,41 +176,92 @@ def _load_bundle(args: argparse.Namespace) -> int:
     from trix.nn.integrity import check_bundle_compatibility, verify_manifest
 
     bundle, ffn, compiled = load_address_bundle(outdir=args.outdir, device=args.device)
-    _print_kv("bundle", str(bundle.outdir))
-    _print_kv("ffn", bundle.config.get("ffn_type"))
-    _print_kv("routing_backend", bundle.config.get("routing_backend"))
-    _print_kv(
-        "has_state_dict",
-        bool(bundle.state_dict_path and bundle.state_dict_path.exists()),
-    )
-    _print_kv("has_dispatch", compiled is not None)
+    out: Dict[str, Any] = {
+        "bundle": str(bundle.outdir),
+        "ffn": bundle.config.get("ffn_type"),
+        "routing_backend": bundle.config.get("routing_backend"),
+        "has_state_dict": bool(
+            bundle.state_dict_path and bundle.state_dict_path.exists()
+        ),
+        "has_dispatch": compiled is not None,
+    }
 
     if args.validate:
         crep = check_bundle_compatibility(Path(args.outdir))
-        _print_kv("compatible", crep.compatible)
-        if crep.warnings:
-            _print_kv("compat_warnings", crep.warnings)
+        out["compatible"] = bool(crep.compatible)
+        out["compat_warnings"] = crep.warnings
+        out["compat_errors"] = crep.errors
         if crep.errors:
-            _print_kv("compat_errors", crep.errors)
-            print("FAIL")
+            if getattr(args, "json", False):
+                out["ok"] = False
+                print(json.dumps(out, indent=2, sort_keys=True))
+            else:
+                _print_kv("bundle", out["bundle"])
+                _print_kv("ffn", out["ffn"])
+                _print_kv("routing_backend", out["routing_backend"])
+                _print_kv("has_state_dict", out["has_state_dict"])
+                _print_kv("has_dispatch", out["has_dispatch"])
+                _print_kv("compatible", out["compatible"])
+                if crep.warnings:
+                    _print_kv("compat_warnings", crep.warnings)
+                _print_kv("compat_errors", crep.errors)
+                print("FAIL")
             return 2
 
         mpath = Path(args.outdir) / "manifest.json"
         if mpath.exists():
             mok, merrs = verify_manifest(Path(args.outdir))
-            _print_kv("manifest_ok", mok)
-            if merrs:
-                _print_kv("manifest_errors", merrs)
+            out["manifest_present"] = True
+            out["manifest_ok"] = bool(mok)
+            out["manifest_errors"] = merrs
             if not mok:
-                print("FAIL")
+                if getattr(args, "json", False):
+                    out["ok"] = False
+                    print(json.dumps(out, indent=2, sort_keys=True))
+                else:
+                    _print_kv("bundle", out["bundle"])
+                    _print_kv("ffn", out["ffn"])
+                    _print_kv("routing_backend", out["routing_backend"])
+                    _print_kv("has_state_dict", out["has_state_dict"])
+                    _print_kv("has_dispatch", out["has_dispatch"])
+                    _print_kv("compatible", out["compatible"])
+                    if crep.warnings:
+                        _print_kv("compat_warnings", crep.warnings)
+                    _print_kv("manifest_ok", mok)
+                    if merrs:
+                        _print_kv("manifest_errors", merrs)
+                    print("FAIL")
                 return 2
+        else:
+            out["manifest_present"] = False
 
     if args.validate and compiled is not None:
         rep = validate_compiled_semantics(
             ffn=ffn, compiled=compiled, samples=64, seed=0
         )
+        out["max_abs_err_compiled_vs_forced"] = rep["max_abs_err_compiled_vs_forced"]
+
+    if getattr(args, "json", False):
+        out["ok"] = True
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    _print_kv("bundle", out["bundle"])
+    _print_kv("ffn", out["ffn"])
+    _print_kv("routing_backend", out["routing_backend"])
+    _print_kv("has_state_dict", out["has_state_dict"])
+    _print_kv("has_dispatch", out["has_dispatch"])
+    if args.validate:
+        _print_kv("compatible", out.get("compatible"))
+        if out.get("compat_warnings"):
+            _print_kv("compat_warnings", out.get("compat_warnings"))
+        if out.get("manifest_present"):
+            _print_kv("manifest_ok", out.get("manifest_ok"))
+            if out.get("manifest_errors"):
+                _print_kv("manifest_errors", out.get("manifest_errors"))
+    if "max_abs_err_compiled_vs_forced" in out:
         _print_kv(
-            "max_abs_err_compiled_vs_forced", rep["max_abs_err_compiled_vs_forced"]
+            "max_abs_err_compiled_vs_forced", out["max_abs_err_compiled_vs_forced"]
         )
     print("OK")
     return 0
@@ -244,19 +295,37 @@ def main(argv: Optional[list[str]] = None) -> int:
     pl.add_argument("--outdir", required=True)
     pl.add_argument("--device", default=None)
     pl.add_argument("--validate", action="store_true")
+    pl.add_argument("--json", action="store_true", help="emit machine-readable JSON")
 
     pbun = sub.add_parser("bundle", help="bundle integrity utilities")
     bun = pbun.add_subparsers(dest="bundle_cmd", required=True)
     bman = bun.add_parser("manifest", help="generate manifest.json")
     bman.add_argument("--outdir", required=True)
+    bman.add_argument("--json", action="store_true", help="emit manifest JSON")
     bver = bun.add_parser("verify", help="verify manifest.json")
     bver.add_argument("--outdir", required=True)
+    bver.add_argument("--json", action="store_true", help="emit machine-readable JSON")
 
     pd = sub.add_parser("drift", help="drift policy checks")
     dsub = pd.add_subparsers(dest="drift_cmd", required=True)
     dchk = dsub.add_parser("check", help="check policy against suite json")
     dchk.add_argument("--suite", required=True, help="path to suite_v1.json")
     dchk.add_argument("--policy", required=True, help="path to drift policy json")
+    dchk.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+
+    ppol = dsub.add_parser("policy", help="drift policy utilities")
+    ppolsub = ppol.add_subparsers(dest="policy_cmd", required=True)
+    pinit = ppolsub.add_parser("init", help="print a starter drift policy json")
+    pinit.add_argument(
+        "--out",
+        default="-",
+        help="output path or '-' for stdout (default '-')",
+    )
+    pinit.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite --out if it exists",
+    )
 
     args = p.parse_args(argv)
 
@@ -270,25 +339,62 @@ def main(argv: Optional[list[str]] = None) -> int:
         return _load_bundle(args)
 
     if args.cmd == "bundle":
-        from trix.nn.integrity import generate_manifest, verify_manifest
+        from trix.nn.integrity import (
+            generate_manifest,
+            verify_manifest,
+            check_bundle_compatibility,
+        )
 
         outdir = Path(args.outdir)
         if args.bundle_cmd == "manifest":
             try:
-                generate_manifest(outdir)
+                m = generate_manifest(outdir)
             except Exception as e:
-                print(f"FAIL: {e}")
+                if getattr(args, "json", False):
+                    print(
+                        json.dumps(
+                            {"ok": False, "error": str(e)}, indent=2, sort_keys=True
+                        )
+                    )
+                else:
+                    print(f"FAIL: {e}")
                 return 2
-            print("OK")
+            if getattr(args, "json", False):
+                print(json.dumps(m, indent=2, sort_keys=True))
+            else:
+                print("OK")
             return 0
         if args.bundle_cmd == "verify":
+            rep = check_bundle_compatibility(outdir)
             ok, errs = verify_manifest(outdir)
             if not ok:
-                print("FAIL")
-                for e in errs:
-                    print(f"- {e}")
+                if getattr(args, "json", False):
+                    payload = {
+                        "ok": False,
+                        "compatible": bool(rep.compatible),
+                        "compat_warnings": rep.warnings,
+                        "compat_errors": rep.errors,
+                        "errors": errs,
+                    }
+                    print(json.dumps(payload, indent=2, sort_keys=True))
+                else:
+                    print("FAIL: manifest verification failed")
+                    if rep.warnings:
+                        print("warnings:")
+                        for w in rep.warnings:
+                            print(f"- {w}")
+                    for e in errs:
+                        print(f"- {e}")
                 return 2
-            print("OK")
+            if getattr(args, "json", False):
+                payload = {
+                    "ok": True,
+                    "compatible": bool(rep.compatible),
+                    "compat_warnings": rep.warnings,
+                }
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("OK")
             return 0
 
     if args.cmd == "drift":
@@ -297,8 +403,37 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.drift_cmd == "check":
             pol = load_drift_policy(Path(args.policy))
             ok, rep = evaluate_drift_policy_on_suite(Path(args.suite), pol)
+            # Default output is JSON already; --json guarantees no extra output.
             print(json.dumps(rep, indent=2, sort_keys=True))
             return 0 if ok else 2
+
+        if args.drift_cmd == "policy":
+            if args.policy_cmd == "init":
+                starter = {
+                    "policy_version": 1,
+                    "drift_threshold": 0.2,
+                    "max_churn": 0.1,
+                    "max_near_tie_rate": 0.3,
+                    "min_margin_mean": 0.001,
+                    "on_violation": "fallback",
+                }
+
+                outp = str(args.out)
+                if outp == "-":
+                    print(json.dumps(starter, indent=2, sort_keys=True))
+                    return 0
+
+                p = Path(outp)
+                if p.exists() and not bool(args.force):
+                    print(f"FAIL: exists: {p}")
+                    return 2
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(
+                    json.dumps(starter, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                print(str(p))
+                return 0
 
     return 2
 
