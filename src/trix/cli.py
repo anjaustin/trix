@@ -61,10 +61,12 @@ def _doctor() -> int:
     packed_py = b._pack_weights_python(w)
     if not torch.equal(packed.cpu(), packed_py.cpu()):
         print("FAIL: pack_weights != python reference")
+        print("Next: run `python -m pytest -q tests/test_kernel_reference_harness.py`")
         return 2
     w2 = unpack_weights(packed, rows, cols)
     if not torch.equal(w.cpu(), w2.cpu()):
         print("FAIL: unpack_weights(pack_weights(w)) != w")
+        print("Next: run `python -m pytest -q tests/test_kernel_reference_harness.py`")
         return 2
 
     batch, in_f, out_f, num_tiles = 2, 33, 64, 4
@@ -81,6 +83,7 @@ def _doctor() -> int:
         ref[:, t * out_per_tile : (t + 1) * out_per_tile] *= gate[:, t : t + 1]
     if not torch.allclose(y.cpu(), ref.cpu(), atol=1e-5):
         print("FAIL: trix_forward != reference")
+        print("Next: run `python -m pytest -q tests/test_kernel_reference_harness.py`")
         return 2
 
     print("PASS")
@@ -101,7 +104,18 @@ def _bench(outdir: str, device: str, include_slow: bool) -> int:
     if include_slow:
         cmd.append("--include-slow")
     r = subprocess.run(cmd)
-    return int(r.returncode)
+    code = int(r.returncode)
+
+    suite_path = Path(outdir) / "suite_v1.json"
+    if suite_path.exists():
+        try:
+            d = json.loads(suite_path.read_text(encoding="utf-8"))
+            ok = bool(d.get("ok"))
+            names = [b.get("name") for b in d.get("benchmarks", [])]
+            print(f"suite_ok={ok} benchmarks={names}")
+        except Exception:
+            pass
+    return code
 
 
 def _export_bundle(args: argparse.Namespace) -> int:

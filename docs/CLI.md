@@ -18,6 +18,11 @@ Run the canonical benchmark suite v1 (writes JSON + JSONL artifacts):
 trix bench --outdir results/benchmarks_v1 --device cpu
 ```
 
+On success it prints a short summary and writes:
+- `suite_v1.json`
+- `routing_telemetry.jsonl`
+- `drift_telemetry.jsonl`
+
 ## Bundles
 
 Bundles are portable routing artifacts (compressed signatures + optional compiled dispatch + validation report).

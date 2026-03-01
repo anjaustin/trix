@@ -228,6 +228,13 @@ M6 (Mesa 14): Address Space Mesa
 - Make contract lifecycle explicit: validate -> ship -> monitor -> invalidate/rebuild.
 - Promote drift-under-optimization to a first-class benchmark artifact (churn curve + contract hit-rate curve).
 
+Mesa 14 (DX Finishline) - Must Ship
+- Blessed path: one recommended drop-in module and one lifecycle/bundle story.
+- CLI first impression: `trix doctor` (PASS/FAIL + next action) and `trix bench` (PASS/FAIL + artifact paths + brief summary).
+- Bundle schema: documented, versioned, and validated via CLI and tests.
+- Telemetry semantics: unambiguous across routing backends (hierarchical vs flat; score-space vs gate-space).
+- Known limits: a single doc linking counterexamples/falsifications and the conditions under which equivalences hold.
+
 M7: BitNet-Style Alpha Scales (b1.58 nugget)
 - Add a supported API for ternary packing paired with per-row `alpha` scales.
 - Enforce native-vs-reference equivalence for pack/unpack/forward with `alpha`.

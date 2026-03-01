@@ -14,6 +14,7 @@ This index points you to the highest-signal docs first.
 - `docs/QUICKSTART.md` (SparseLookup v2 + CompiledDispatch walkthrough)
 - `docs/BENCHMARKS.md` (canonical benchmark entrypoints)
 - `docs/CLI.md` (doctor/bench/bundle commands)
+- `docs/BUNDLE_SCHEMA.md` (bundle format and compatibility)
 
 ## Routing As A Primitive (Engineering)
 
@@ -25,6 +26,10 @@ This index points you to the highest-signal docs first.
 - `src/trix/nn/bundle.py` (bundle export/import utilities)
 - `native/README.md` (C++ routing benchmark + falsification + degeneracy detector)
 
+## Limits
+
+- `docs/KNOWN_LIMITS.md` (counterexamples and boundary conditions)
+
 ## API References
 
 - `docs/SPARSE_LOOKUP_V2_API.md`
@@ -33,6 +38,7 @@ This index points you to the highest-signal docs first.
 
 - `docs/NEON_OPTIMIZATION_PLAN.md`
 - `docs/NATIVE_CORRECTNESS.md` (native-vs-reference correctness harness)
+- `docs/ALPHA_SCALES.md` (BitNet-style ternary+alpha semantics and falsifications)
 - `src/trix/kernel/` (CMake build + bindings)
 
 ## Experiments

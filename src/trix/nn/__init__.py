@@ -75,6 +75,11 @@ from .lifecycle import (
     LifecycleGuardConfig,
 )
 
+from .dropin import (
+    DropInFFN,
+    DropInConfig,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -108,6 +113,9 @@ __all__ = [
     # Lifecycle
     "RoutingLifecycleV1",
     "LifecycleGuardConfig",
+    # Drop-in
+    "DropInFFN",
+    "DropInConfig",
     # Temporal Tiles (Mesa 4)
     "TemporalTileLayer",
     "TemporalTileStack",

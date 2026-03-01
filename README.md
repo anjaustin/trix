@@ -104,6 +104,19 @@ output, info, aux = compiler.forward(x, class_hint=0, confidence=0.9)
 
 See `docs/QUICKSTART.md` and `examples/basic_usage.py`.
 
+## Pick Your Lane
+
+- `dynamic`: research mode; routing is computed each forward
+- `contracted`: compile stable classes into a dispatch contract and guard it
+- `packed`: ternary address mode using XOR+POPCNT distances (inputs ternarized via `sign(x)`)
+
+Developer-first entrypoints:
+- `trix doctor` (self-check)
+- `trix bench` (writes `suite_v1.json` + telemetry)
+- `trix export-bundle` / `trix load-bundle` (portable address plane)
+
+See `docs/CLI.md` and `docs/BUNDLE_SCHEMA.md`.
+
 ## Minimal Routing Primitive (Conceptual)
 
 Many routing variants in this repo reduce to a simple kernel:
