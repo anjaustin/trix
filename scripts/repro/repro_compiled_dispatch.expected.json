@@ -1,0 +1,4 @@
+{
+  "min_agreement_rate": 0.7,
+  "serialization_roundtrip": true
+}

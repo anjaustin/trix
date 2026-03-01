@@ -1,0 +1,4 @@
+{
+  "max_error_tolerance": 1e-10,
+  "no_runtime_trig": true
+}

@@ -1,0 +1,5 @@
+{
+  "roundtrip_exact": true,
+  "routing_agreement": 1.0,
+  "min_compression_ratio": 10.0
+}
