@@ -63,6 +63,11 @@ from .compiled_dispatch import (
     ProfileStats,
 )
 
+from .lifecycle import (
+    RoutingLifecycleV1,
+    LifecycleGuardConfig,
+)
+
 __all__ = [
     # Recommended - emergent routing (zero parameters)
     "TriXFFN",
@@ -88,6 +93,9 @@ __all__ = [
     "CompiledDispatch",
     "CompiledEntry",
     "ProfileStats",
+    # Lifecycle
+    "RoutingLifecycleV1",
+    "LifecycleGuardConfig",
     # Temporal Tiles (Mesa 4)
     "TemporalTileLayer",
     "TemporalTileStack",
