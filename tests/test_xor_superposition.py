@@ -28,6 +28,16 @@ def test_compress_decompress_lossless():
     assert torch.equal(torch.sign(sigs), dec)
 
 
+def test_compressed_export_import_roundtrip():
+    from trix.nn.xor_superposition import CompressedSignatures
+
+    sigs = _rand_ternary(16, 129, seed=4)
+    comp = CompressedSignatures().compress(sigs)
+    data = comp.export()
+    comp2 = CompressedSignatures.from_export(data)
+    assert torch.equal(comp.decompress_all(), comp2.decompress_all())
+
+
 def test_dot_equals_masked_popcount_argmin():
     """Property: argmax dot equals argmin masked popcount distance."""
     from trix.nn.xor_superposition import (

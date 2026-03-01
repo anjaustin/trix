@@ -23,3 +23,4 @@ Notes:
 - FP4 atoms correctness on truth tables (exactness-by-construction lane)
 - Routing specialization + CompiledDispatch semantics on a small synthetic task (routing-as-primitive lane)
 - Stability probe: churn under controlled signature perturbations (bounded, measurable)
+- Drift under optimization: routing churn and compiled contract drift under regularizer-driven signature updates

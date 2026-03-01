@@ -241,3 +241,63 @@ class CompressedSignatures:
             num_signatures=int(self.num_signatures),
             dim=int(self.dim),
         )
+
+    def export(self) -> dict:
+        """Export as a JSON-serializable dict."""
+        if self.base_packed is None or self.base_ternary is None:
+            raise RuntimeError("not compressed")
+
+        return {
+            "schema_version": 1,
+            "dim": int(self.dim),
+            "num_signatures": int(self.num_signatures),
+            "base_packed": self.base_packed.detach().cpu().tolist(),
+            # Store base_ternary to allow exact decompression without unpacking.
+            "base_ternary": self.base_ternary.detach().cpu().to(torch.int8).tolist(),
+            "deltas": [
+                {
+                    "positions": d.positions.detach().cpu().to(torch.int16).tolist(),
+                    "values": d.values.detach().cpu().to(torch.int8).tolist(),
+                }
+                for d in self.deltas
+            ],
+        }
+
+    @staticmethod
+    def from_export(
+        data: dict, *, device: Optional[torch.device] = None
+    ) -> "CompressedSignatures":
+        """Import from an export dict."""
+        if int(data.get("schema_version", 0)) != 1:
+            raise ValueError("unsupported compressed signature schema")
+
+        dim = int(data["dim"])
+        n = int(data["num_signatures"])
+
+        dev = device or torch.device("cpu")
+
+        out = CompressedSignatures()
+        out.dim = dim
+        out.num_signatures = n
+        out._device = dev
+
+        out.base_packed = torch.tensor(
+            data["base_packed"], dtype=torch.uint8, device=dev
+        )
+        base_tern = torch.tensor(data["base_ternary"], dtype=torch.int8, device=dev).to(
+            torch.float32
+        )
+        if base_tern.numel() != dim:
+            raise ValueError("base_ternary has wrong dim")
+        out.base_ternary = base_tern
+
+        deltas = []
+        for d in data.get("deltas", []):
+            pos = torch.tensor(d["positions"], dtype=torch.int16, device=dev)
+            vals = torch.tensor(d["values"], dtype=torch.int8, device=dev)
+            deltas.append(SparseDelta(positions=pos, values=vals))
+        if len(deltas) != n:
+            raise ValueError("delta count mismatch")
+        out.deltas = deltas
+
+        return out

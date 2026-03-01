@@ -139,6 +139,13 @@ class SparseLookupFFNv2(nn.Module):
             )
         self.routing_backend = routing_backend
 
+        # Routing acceleration caches (used by flat_popcount backend)
+        self._packed_signatures_cache = None
+        self._packed_signatures_raw_version = -1
+
+        self._compressed_signatures = None
+        self._compressed_signatures_raw_version = -1
+
         # ======================
         # EXISTING COMPONENTS
         # ======================
@@ -237,6 +244,10 @@ class SparseLookupFFNv2(nn.Module):
                 "tag": tag,
             }
         )
+
+        # Invalidate caches.
+        self._packed_signatures_cache = None
+        self._compressed_signatures = None
 
     def freeze_signature(self, tile_idx: int) -> None:
         """Freeze a tile's signature (no gradient updates)."""
@@ -365,10 +376,9 @@ class SparseLookupFFNv2(nn.Module):
         from .xor_superposition import pack_ternary_to_uint8, popcount_distance_packed
 
         x_tern = torch.sign(x)
-        sigs = torch.sign(signatures)
-
         px = pack_ternary_to_uint8(x_tern)
-        ps = pack_ternary_to_uint8(sigs)
+
+        ps = self._get_packed_signatures(signatures)
 
         dist = popcount_distance_packed(px, ps, ignore_x_zeros=True)
         tile_idx = dist.argmin(dim=-1)
@@ -378,6 +388,78 @@ class SparseLookupFFNv2(nn.Module):
 
         scores = -dist.to(torch.float32)
         return tile_idx, scores
+
+    def _get_packed_signatures(self, signatures: torch.Tensor) -> torch.Tensor:
+        """Return cached packed signatures for popcount routing."""
+        from .xor_superposition import pack_ternary_to_uint8
+
+        v = int(getattr(self.signatures_raw, "_version", -1))
+        if (
+            self._packed_signatures_cache is not None
+            and self._packed_signatures_raw_version == v
+            and self._packed_signatures_cache.device == signatures.device
+        ):
+            return self._packed_signatures_cache
+
+        sigs = torch.sign(signatures)
+        packed = pack_ternary_to_uint8(sigs)
+        self._packed_signatures_cache = packed
+        self._packed_signatures_raw_version = v
+        return packed
+
+    def compress_signatures(self) -> None:
+        """Build and cache a CompressedSignatures representation of current signatures."""
+        from .xor_superposition import CompressedSignatures
+
+        v = int(getattr(self.signatures_raw, "_version", -1))
+        if (
+            self._compressed_signatures is not None
+            and self._compressed_signatures_raw_version == v
+        ):
+            return
+
+        comp = CompressedSignatures().compress(self.signatures.detach())
+        self._compressed_signatures = comp.to(self.signatures.device)
+        self._compressed_signatures_raw_version = v
+
+    def export_compressed_signatures(self) -> dict:
+        """Export compressed signatures (builds them if needed)."""
+        self.compress_signatures()
+        assert self._compressed_signatures is not None
+        return self._compressed_signatures.export()
+
+    def import_compressed_signatures(self, data: dict) -> None:
+        """Import compressed signatures and update signatures_raw to match."""
+        from .xor_superposition import CompressedSignatures
+
+        comp = CompressedSignatures.from_export(data, device=self.signatures_raw.device)
+        sigs = comp.decompress_all().to(self.signatures_raw.dtype)
+        if sigs.shape != self.signatures_raw.shape:
+            raise ValueError("imported signatures shape mismatch")
+        with torch.no_grad():
+            self.signatures_raw.copy_(sigs)
+
+        self._compressed_signatures = comp
+        self._compressed_signatures_raw_version = int(
+            getattr(self.signatures_raw, "_version", -1)
+        )
+        self._packed_signatures_cache = None
+        self._packed_signatures_raw_version = -1
+
+    def get_signature_compression_stats(self) -> Optional[dict]:
+        """Return compression stats if compressed signatures are available."""
+        if self._compressed_signatures is None:
+            return None
+        s = self._compressed_signatures.get_compression_stats()
+        return {
+            "original_bytes": int(s.original_bytes),
+            "compressed_bytes": int(s.compressed_bytes),
+            "compression_ratio": float(s.compression_ratio),
+            "mean_delta_sparsity": float(s.mean_delta_sparsity),
+            "max_delta_sparsity": float(s.max_delta_sparsity),
+            "num_signatures": int(s.num_signatures),
+            "dim": int(s.dim),
+        }
 
     # =========================================================================
     # ISLAND REGULARIZERS (new)

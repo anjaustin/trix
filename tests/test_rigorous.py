@@ -262,7 +262,8 @@ class TestWHTExhaustive:
 
     def test_wht_n8_against_scipy(self):
         """WHT N=8 matches scipy Hadamard matrix multiplication."""
-        from scipy.linalg import hadamard
+        scipy = pytest.importorskip("scipy")
+        hadamard = scipy.linalg.hadamard
         from fft_compiler import compile_fft_routing, CompiledWHT
 
         N = 8
@@ -720,7 +721,9 @@ class TestEdgeCases:
     def test_wht_sequential_sizes(self):
         """WHT works for all power-of-2 sizes up to 64."""
         from fft_compiler import compile_fft_routing, CompiledWHT
-        from scipy.linalg import hadamard
+
+        scipy = pytest.importorskip("scipy")
+        hadamard = scipy.linalg.hadamard
 
         for N in [2, 4, 8, 16, 32, 64]:
             routing = compile_fft_routing(N)
@@ -772,7 +775,9 @@ class TestEdgeCases:
     def test_single_one_input(self):
         """Single 1 in position k gives k-th column of transform matrix."""
         from fft_compiler import compile_fft_routing, CompiledWHT
-        from scipy.linalg import hadamard
+
+        scipy = pytest.importorskip("scipy")
+        hadamard = scipy.linalg.hadamard
 
         N = 8
         routing = compile_fft_routing(N)

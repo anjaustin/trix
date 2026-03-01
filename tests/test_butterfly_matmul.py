@@ -19,7 +19,9 @@ sys.path.insert(0, str(_ROOT / "experiments" / "matmul"))
 
 import pytest
 import numpy as np
-from scipy.linalg import hadamard
+
+scipy = pytest.importorskip("scipy")
+hadamard = scipy.linalg.hadamard
 
 
 class TestButterflyIdentity:

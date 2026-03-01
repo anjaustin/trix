@@ -176,7 +176,15 @@ class RoutingLifecycleV1:
             "fallback_applied": fallback_applied,
             "fallback_reason": fallback_reason,
             "compiled": bool(routing_info.get("compiled", False)),
+            "routing_backend": routing_info.get("routing_backend"),
         }
+
+        try:
+            stats_fn = getattr(self.ffn, "get_signature_compression_stats", None)
+            if callable(stats_fn):
+                record["signature_compression"] = stats_fn()
+        except Exception:
+            record["signature_compression"] = None
 
         if jsonl_path is not None:
             _jsonl_append(jsonl_path, record)

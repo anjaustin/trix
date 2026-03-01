@@ -372,6 +372,150 @@ def _bench_routing_compiled_dispatch(
     }
 
 
+def _bench_drift_under_regularizer_training(
+    *,
+    seed: int,
+    device: str,
+    outdir: Path,
+) -> Dict[str, Any]:
+    """Measure routing drift and contract drift under optimization.
+
+    SparseLookupFFNv2 signature parameters are updated directly by the
+    regularizers (ternary/sparsity/diversity). This benchmark intentionally
+    optimizes the regularizer objective and measures how routing changes over
+    time on a fixed evaluation batch.
+    """
+
+    _ensure_imports()
+    from trix.nn import SparseLookupFFNv2, RoutingLifecycleV1
+    from trix.nn.compiled_dispatch import CompiledDispatch
+
+    torch.manual_seed(seed)
+    dev = torch.device(device)
+
+    d_model = 64
+    num_tiles = 8
+    tiles_per_cluster = 4
+    num_classes = 5
+
+    ffn = SparseLookupFFNv2(
+        d_model=d_model,
+        num_tiles=num_tiles,
+        tiles_per_cluster=tiles_per_cluster,
+        dropout=0.0,
+        use_score_calibration=False,
+        ternary_weight=0.05,
+        sparsity_weight=0.05,
+        diversity_weight=0.05,
+    ).to(dev)
+
+    B, T = 64, 16
+    prototypes = torch.randn(num_classes, d_model, device=dev)
+    prototypes = (prototypes - prototypes.mean(dim=-1, keepdim=True)) / (
+        prototypes.std(dim=-1, keepdim=True) + 1e-6
+    )
+
+    def make_batch(step: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        xs = torch.empty((B, T, d_model), device=dev)
+        labels = torch.empty((B, T), dtype=torch.long, device=dev)
+        classes = torch.tensor([(i + step) % num_classes for i in range(B)], device=dev)
+        for i in range(B):
+            c = int(classes[i].item())
+            xs[i] = prototypes[c] + 0.25 * torch.randn((T, d_model), device=dev)
+            labels[i].fill_(c)
+        return xs, labels
+
+    x_eval, y_eval = make_batch(0)
+
+    ffn.eval()
+    with torch.no_grad():
+        _o, info0, _aux0 = ffn(x_eval)
+        base_tiles = info0["tile_idx"].detach().clone()
+
+    # Populate claims.
+    ffn.train()
+    ffn.reset_stats()
+    for s in range(4):
+        x, y = make_batch(s)
+        _o, _info, _aux = ffn(x, labels=y)
+
+    compiler = CompiledDispatch(ffn)
+    compiled = compiler.compile_stable(
+        threshold=0.3, min_confidence=0.0, num_classes=num_classes
+    )
+    dispatch0 = compiler.export_dispatch_table()
+
+    opt = torch.optim.Adam(ffn.parameters(), lr=1e-2)
+    steps = 15
+
+    churn = []
+    drifted = []
+    hit_rates = []
+    total_aux = []
+
+    lc = RoutingLifecycleV1(ffn, compiled=compiler)
+    telemetry_path = outdir / "drift_telemetry.jsonl"
+
+    prev_tiles = base_tiles
+    for step in range(steps):
+        x, y = make_batch(step)
+        out, info, aux = ffn(x, labels=y)
+
+        loss = aux["total_aux"]
+        total_aux.append(float(loss.detach().cpu().item()))
+
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        ffn.eval()
+        with torch.no_grad():
+            _o, info_e, _aux_e = ffn(x_eval)
+            tiles = info_e["tile_idx"].detach()
+            churn.append(float((tiles != prev_tiles).float().mean().item()))
+            prev_tiles = tiles
+
+            drifted_classes = compiler.check_drift(threshold=0.2)
+            drifted.append([int(k) for k in drifted_classes])
+
+            hit_rates.append(float(compiler.get_stats().get("hit_rate", 0.0)))
+
+            lc.observe(
+                x_eval[:4],
+                class_hint=int(y_eval[0, 0].item()),
+                confidence=1.0,
+                jsonl_path=str(telemetry_path),
+                run_id=f"drift_step_{step}",
+            )
+
+        ffn.train()
+
+    return {
+        "name": "drift_under_regularizer_training",
+        "ok": True,
+        "config": {
+            "seed": seed,
+            "device": str(dev),
+            "steps": steps,
+            "d_model": d_model,
+            "num_tiles": num_tiles,
+            "tiles_per_cluster": tiles_per_cluster,
+            "num_classes": num_classes,
+        },
+        "compiled": {
+            "compiled_classes": sorted([int(k) for k in compiled.keys()]),
+            "dispatch_table_initial": dispatch0,
+        },
+        "metrics": {
+            "total_aux": total_aux,
+            "churn": churn,
+            "drifted_classes": drifted,
+            "compiled_hit_rate": hit_rates,
+        },
+        "telemetry": {"jsonl": str(telemetry_path)},
+    }
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--outdir", default="results/benchmarks_v1")
@@ -397,6 +541,11 @@ def main() -> int:
     suite["benchmarks"].append(_bench_fp4_atoms(include_slow=bool(args.include_slow)))
     suite["benchmarks"].append(
         _bench_routing_compiled_dispatch(
+            seed=int(args.seed), device=str(args.device), outdir=outdir
+        )
+    )
+    suite["benchmarks"].append(
+        _bench_drift_under_regularizer_training(
             seed=int(args.seed), device=str(args.device), outdir=outdir
         )
     )
