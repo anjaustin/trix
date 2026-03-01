@@ -70,7 +70,29 @@ python experiments/benchmarks/benchmark_suite_v1.py --outdir results/benchmarks_
 
 ## Quick Start
 
-### SparseLookupFFN (recommended starting point)
+### DropInFFN (recommended starting point)
+
+If you're integrating TriX into an existing model, start here.
+
+```python
+import torch
+from trix.nn import DropInFFN, DropInConfig
+
+x = torch.randn(2, 128, 512)
+
+ffn = DropInFFN(
+    DropInConfig(d_model=512, num_tiles=64, tiles_per_cluster=8),
+    mode="dynamic",  # or: contracted|packed
+)
+
+y = ffn(x)  # drop-in: returns a tensor
+
+# Optional training signal
+y, routing_info, aux_losses = ffn(x, return_aux=True)
+loss = some_task_loss(y) + aux_losses["total_aux"]
+```
+
+### SparseLookupFFN (legacy quick start)
 
 ```python
 import torch

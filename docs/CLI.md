@@ -27,6 +27,8 @@ On success it prints a short summary and writes:
 
 Bundles are portable routing artifacts (compressed signatures + optional compiled dispatch + validation report).
 
+Note: bundle export/import currently supports `SparseLookupFFNv2` bundles.
+
 Export from a `SparseLookupFFNv2` state dict:
 
 ```bash

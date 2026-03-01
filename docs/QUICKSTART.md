@@ -28,18 +28,21 @@ python -m pip install -e ".[dev]"
 
 ```python
 import torch
-from trix.nn import SparseLookupFFNv2
+from trix.nn import DropInFFN, DropInConfig
 
-# Create a TriX FFN
-ffn = SparseLookupFFNv2(
-    d_model=128,         # Model dimension
-    num_tiles=16,        # Number of specialist tiles
-    tiles_per_cluster=4, # Tiles per routing cluster
+# Create a TriX FFN (drop-in)
+ffn = DropInFFN(
+    DropInConfig(
+        d_model=128,
+        num_tiles=16,
+        tiles_per_cluster=4,
+    ),
+    mode="dynamic",
 )
 
 # Forward pass
 x = torch.randn(2, 32, 128)  # (batch, seq, d_model)
-output, routing_info, aux_losses = ffn(x)
+output, routing_info, aux_losses = ffn(x, return_aux=True)
 
 # output: transformed tensor, same shape as input
 # routing_info: which tiles were selected
