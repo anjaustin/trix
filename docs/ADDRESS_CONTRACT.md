@@ -100,6 +100,7 @@ Notes:
 
 Optional fields (v1 extensions):
 - `tie_rate` (number) : fraction of inputs that had argmax ties
+- `near_tie_rate` (number) : fraction of inputs with (best-second_best) <= 2
 - `margin_mean` (number) : mean(best_score - second_best_score)
 - `fallback_applied` (bool)
 - `fallback_reason` (string)
@@ -110,6 +111,7 @@ Optional fields (v1 extensions):
 The native C++ harness in `native/` provides:
 - a routing microbenchmark (distribution health metrics)
 - a stability benchmark (churn under controlled perturbations)
+- a degeneracy detector benchmark (churn vs margin under constructed near-tie regimes)
 - a unit/invariant test suite (`ctest`)
 
 ## 5. Falsification Tests

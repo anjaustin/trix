@@ -155,6 +155,7 @@ std::vector<int> route_argmax_with_stats(
   routes.resize(static_cast<size_t>(inputs_n));
 
   int64_t ties = 0;
+  int64_t near_ties = 0;
   double margin_sum = 0.0;
 
   for (int i = 0; i < inputs_n; i++) {
@@ -184,6 +185,7 @@ std::vector<int> route_argmax_with_stats(
     const int32_t margin = best - second;
     margin_sum += static_cast<double>(margin);
     if (margin == 0) ties++;
+    if (margin <= 2) near_ties++;
 
     if (best_count > 1 && tie_break == TieBreak::Hash) {
       const uint64_t h = hash_input_row(x, dim, seed);
@@ -197,7 +199,9 @@ std::vector<int> route_argmax_with_stats(
     RoutingStats s;
     s.inputs = inputs_n;
     s.ties = ties;
+    s.near_ties = near_ties;
     s.tie_rate = (inputs_n > 0) ? (static_cast<double>(ties) / static_cast<double>(inputs_n)) : 0.0;
+    s.near_tie_rate = (inputs_n > 0) ? (static_cast<double>(near_ties) / static_cast<double>(inputs_n)) : 0.0;
     s.margin_mean = (inputs_n > 0) ? (margin_sum / static_cast<double>(inputs_n)) : 0.0;
     *out_stats = s;
   }

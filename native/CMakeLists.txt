@@ -55,4 +55,11 @@ if(BUILD_TESTING)
   )
   target_include_directories(trix_native_dot_popcount_tests PRIVATE src)
   add_test(NAME trix_native_dot_popcount_tests COMMAND trix_native_dot_popcount_tests)
+
+  add_executable(trix_native_margin_sweep_tests
+    tests/test_margin_sweep_properties.cpp
+    src/routing.cpp
+  )
+  target_include_directories(trix_native_margin_sweep_tests PRIVATE src)
+  add_test(NAME trix_native_margin_sweep_tests COMMAND trix_native_margin_sweep_tests)
 endif()

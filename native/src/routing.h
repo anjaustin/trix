@@ -18,7 +18,9 @@ enum class TieBreak {
 struct RoutingStats {
   int64_t inputs = 0;
   int64_t ties = 0;      // count of inputs where best == second_best
+  int64_t near_ties = 0; // count of inputs where (best-second_best) <= 2
   double tie_rate = 0.0;
+  double near_tie_rate = 0.0;
   double margin_mean = 0.0;  // mean(best - second_best)
 };
 

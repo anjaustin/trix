@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@
 namespace {
 
 struct Args {
-  std::string benchmark = "routing";  // routing|stability
+  std::string benchmark = "routing";  // routing|stability|margin_sweep
   int tiles = 64;
   int dim = 512;
   int inputs = 4096;
@@ -23,6 +24,10 @@ struct Args {
   std::optional<std::string> jsonl;
   std::string tie_break = "first";  // first|hash
   bool guard_ties = false;
+
+  // margin_sweep params (requires tiles==2)
+  int diff_dims = 16;
+  double bias = 0.55;
 };
 
 static std::string make_run_id(const Args& args) {
@@ -35,8 +40,9 @@ static std::string make_run_id(const Args& args) {
 static void usage(const char* argv0) {
   std::cerr
       << "Usage: " << argv0
-      << " [--benchmark routing|stability] [--tiles N] [--dim N] [--inputs N] [--seed N]"
-         " [--flip-prob P] [--jsonl PATH] [--tie-break first|hash] [--guard-ties]\n";
+      << " [--benchmark routing|stability|margin_sweep] [--tiles N] [--dim N] [--inputs N] [--seed N]"
+         " [--flip-prob P] [--jsonl PATH] [--tie-break first|hash] [--guard-ties]"
+         " [--diff-dims K] [--bias P]\n";
 }
 
 static bool parse_int(const char* s, int* out) {
@@ -61,6 +67,12 @@ static bool parse_double(const char* s, double* out) {
   if (!end || *end != '\0') return false;
   *out = v;
   return true;
+}
+
+static double clamp01(double x) {
+  if (x < 0.0) return 0.0;
+  if (x > 1.0) return 1.0;
+  return x;
 }
 
 static std::string json_number(double x) {
@@ -112,6 +124,10 @@ int main(int argc, char** argv) {
       args.tie_break = need("--tie-break");
     } else if (std::strcmp(a, "--guard-ties") == 0) {
       args.guard_ties = true;
+    } else if (std::strcmp(a, "--diff-dims") == 0) {
+      if (!parse_int(need("--diff-dims"), &args.diff_dims)) return 2;
+    } else if (std::strcmp(a, "--bias") == 0) {
+      if (!parse_double(need("--bias"), &args.bias)) return 2;
     } else if (std::strcmp(a, "-h") == 0 || std::strcmp(a, "--help") == 0) {
       usage(argv[0]);
       return 0;
@@ -200,6 +216,7 @@ int main(int argc, char** argv) {
           {"seed", std::to_string(args.seed)},
           {"address_type", json_string("tile_id")},
           {"tie_rate", json_number(stats0.tie_rate)},
+          {"near_tie_rate", json_number(stats0.near_tie_rate)},
           {"margin_mean", json_number(stats0.margin_mean)},
           {"tie_break", json_string(tb)},
           {"fallback_applied", fallback_applied ? "true" : "false"},
@@ -239,6 +256,7 @@ int main(int argc, char** argv) {
           {"seed", std::to_string(args.seed)},
           {"address_type", json_string("tile_id")},
           {"tie_rate", json_number(stats0.tie_rate)},
+          {"near_tie_rate", json_number(stats0.near_tie_rate)},
           {"margin_mean", json_number(stats0.margin_mean)},
           {"tie_break", json_string(tb)},
           {"flip_prob", json_number(args.flip_prob)},
@@ -246,6 +264,197 @@ int main(int argc, char** argv) {
           {"routes_per_s", json_number(routes_per_s)},
           {"churn", json_number(churn)},
       });
+    }
+
+    return 0;
+  }
+
+  if (args.benchmark == "margin_sweep") {
+    if (cfg.tiles != 2) {
+      std::cerr << "margin_sweep requires --tiles 2\n";
+      return 2;
+    }
+    if (args.diff_dims <= 0 || args.diff_dims > cfg.dim) {
+      std::cerr << "--diff-dims must be in [1, dim]\n";
+      return 2;
+    }
+    args.bias = clamp01(args.bias);
+    args.flip_prob = clamp01(args.flip_prob);
+
+    // Construct signatures with controlled near-tie geometry.
+    // tile0 = base; tile1 = base with `diff_dims` sign flips.
+    std::vector<int8_t> base = trix_native::make_random_ternary(cfg.dim, args.seed ^ 0x11111111ULL);
+    for (int i = 0; i < cfg.dim; i++) {
+      if (base[static_cast<size_t>(i)] == 0) base[static_cast<size_t>(i)] = 1;
+    }
+
+    std::vector<int> flip_idx;
+    flip_idx.reserve(static_cast<size_t>(args.diff_dims));
+    {
+      std::mt19937_64 rng(args.seed ^ 0x22222222ULL);
+      std::uniform_int_distribution<int> dist(0, cfg.dim - 1);
+      std::vector<uint8_t> used(static_cast<size_t>(cfg.dim), 0);
+      while (static_cast<int>(flip_idx.size()) < args.diff_dims) {
+        int j = dist(rng);
+        if (used[static_cast<size_t>(j)]) continue;
+        used[static_cast<size_t>(j)] = 1;
+        flip_idx.push_back(j);
+      }
+    }
+
+    std::vector<int8_t> sig;
+    sig.resize(static_cast<size_t>(cfg.tiles) * static_cast<size_t>(cfg.dim));
+    for (int i = 0; i < cfg.dim; i++) sig[static_cast<size_t>(i)] = base[static_cast<size_t>(i)];
+    for (int i = 0; i < cfg.dim; i++) sig[static_cast<size_t>(cfg.dim + i)] = base[static_cast<size_t>(i)];
+    for (int j : flip_idx) {
+      sig[static_cast<size_t>(cfg.dim + j)] = static_cast<int8_t>(-sig[static_cast<size_t>(cfg.dim + j)]);
+    }
+
+    // Sweep bias (keep p_zero=0.0) to produce near-ties without requiring exact ties.
+    const double bias_list[] = {0.50, 0.51, 0.52, 0.55, 0.60, 0.70, 0.80, 0.90};
+    for (double bias : bias_list) {
+      const double p_zero = 0.0;
+      bias = clamp01(bias);
+
+      std::vector<int8_t> x;
+      x.resize(static_cast<size_t>(args.inputs) * static_cast<size_t>(cfg.dim));
+
+      std::mt19937_64 rng(args.seed ^ 0x33333333ULL);
+      std::uniform_real_distribution<double> u01(0.0, 1.0);
+
+      for (int n = 0; n < args.inputs; n++) {
+        int8_t* row = x.data() + static_cast<size_t>(n) * static_cast<size_t>(cfg.dim);
+        for (int i = 0; i < cfg.dim; i++) row[i] = base[static_cast<size_t>(i)];
+        for (int j : flip_idx) {
+          const double r = u01(rng);
+          if (r < p_zero) {
+            row[j] = 0;
+          } else {
+            const bool pick0 = (u01(rng) < bias);
+            const int8_t s0 = sig[static_cast<size_t>(j)];
+            const int8_t s1 = sig[static_cast<size_t>(cfg.dim + j)];
+            row[j] = pick0 ? s0 : s1;
+          }
+        }
+      }
+
+      trix_native::RoutingStats s0;
+      auto a0 = std::chrono::steady_clock::now();
+      std::vector<int> r0 = trix_native::route_argmax_with_stats(
+          cfg, sig.data(), x.data(), args.inputs, tie_break, args.seed, &s0);
+      auto a1 = std::chrono::steady_clock::now();
+      const double routing_ms = std::chrono::duration<double, std::milli>(a1 - a0).count();
+      const double rps = (static_cast<double>(args.inputs) / routing_ms) * 1000.0;
+
+      std::vector<int8_t> sig2 = sig;
+      trix_native::apply_ternary_resample_noise(
+          sig2.data(), static_cast<int>(sig2.size()), args.flip_prob, args.seed ^ 0x44444444ULL);
+      trix_native::RoutingStats s1;
+      std::vector<int> r1 = trix_native::route_argmax_with_stats(
+          cfg, sig2.data(), x.data(), args.inputs, tie_break, args.seed, &s1);
+      const double churn = trix_native::route_churn_rate(r0, r1);
+
+      std::cout << "sweep=bias bias=" << bias << " diff_dims=" << args.diff_dims << " margin_mean=" << s0.margin_mean
+                << " tie_rate=" << s0.tie_rate << " near_tie_rate=" << s0.near_tie_rate << " churn=" << churn
+                << "\n";
+
+      if (writer.has_value()) {
+        const char* tb = (tie_break == trix_native::TieBreak::Hash) ? "hash" : "first";
+        writer->write_kv({
+            {"schema_version", "1"},
+            {"event", json_string("margin_sweep")},
+            {"run_id", json_string(run_id)},
+            {"tiles", std::to_string(cfg.tiles)},
+            {"dim", std::to_string(cfg.dim)},
+            {"inputs", std::to_string(args.inputs)},
+            {"seed", std::to_string(args.seed)},
+            {"address_type", json_string("tile_id")},
+            {"tie_break", json_string(tb)},
+            {"sweep", json_string("bias")},
+            {"diff_dims", std::to_string(args.diff_dims)},
+            {"bias", json_number(bias)},
+            {"p_zero", json_number(p_zero)},
+            {"flip_prob", json_number(args.flip_prob)},
+            {"routing_ms", json_number(routing_ms)},
+            {"routes_per_s", json_number(rps)},
+            {"tie_rate", json_number(s0.tie_rate)},
+            {"near_tie_rate", json_number(s0.near_tie_rate)},
+            {"margin_mean", json_number(s0.margin_mean)},
+            {"churn", json_number(churn)},
+        });
+      }
+    }
+
+    // Sweep p_zero (keep bias fixed) to show tie-degenerate regimes.
+    const double pzero_list[] = {0.0, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99};
+    for (double p_zero : pzero_list) {
+      std::vector<int8_t> x;
+      x.resize(static_cast<size_t>(args.inputs) * static_cast<size_t>(cfg.dim));
+
+      std::mt19937_64 rng(args.seed ^ 0x33333333ULL);
+      std::uniform_real_distribution<double> u01(0.0, 1.0);
+
+      for (int n = 0; n < args.inputs; n++) {
+        int8_t* row = x.data() + static_cast<size_t>(n) * static_cast<size_t>(cfg.dim);
+        for (int i = 0; i < cfg.dim; i++) row[i] = base[static_cast<size_t>(i)];
+        for (int j : flip_idx) {
+          const double r = u01(rng);
+          if (r < p_zero) {
+            row[j] = 0;
+          } else {
+            const bool pick0 = (u01(rng) < args.bias);
+            const int8_t s0 = sig[static_cast<size_t>(j)];
+            const int8_t s1 = sig[static_cast<size_t>(cfg.dim + j)];
+            row[j] = pick0 ? s0 : s1;
+          }
+        }
+      }
+
+      trix_native::RoutingStats s0;
+      auto a0 = std::chrono::steady_clock::now();
+      std::vector<int> r0 = trix_native::route_argmax_with_stats(
+          cfg, sig.data(), x.data(), args.inputs, tie_break, args.seed, &s0);
+      auto a1 = std::chrono::steady_clock::now();
+      const double routing_ms = std::chrono::duration<double, std::milli>(a1 - a0).count();
+      const double rps = (static_cast<double>(args.inputs) / routing_ms) * 1000.0;
+
+      std::vector<int8_t> sig2 = sig;
+      trix_native::apply_ternary_resample_noise(
+          sig2.data(), static_cast<int>(sig2.size()), args.flip_prob, args.seed ^ 0x44444444ULL);
+      trix_native::RoutingStats s1;
+      std::vector<int> r1 = trix_native::route_argmax_with_stats(
+          cfg, sig2.data(), x.data(), args.inputs, tie_break, args.seed, &s1);
+      const double churn = trix_native::route_churn_rate(r0, r1);
+
+      std::cout << "p_zero=" << p_zero << " diff_dims=" << args.diff_dims << " bias=" << args.bias
+                << " margin_mean=" << s0.margin_mean << " tie_rate=" << s0.tie_rate
+                << " near_tie_rate=" << s0.near_tie_rate << " churn=" << churn << "\n";
+
+      if (writer.has_value()) {
+        const char* tb = (tie_break == trix_native::TieBreak::Hash) ? "hash" : "first";
+        writer->write_kv({
+            {"schema_version", "1"},
+            {"event", json_string("margin_sweep")},
+            {"run_id", json_string(run_id)},
+            {"tiles", std::to_string(cfg.tiles)},
+            {"dim", std::to_string(cfg.dim)},
+            {"inputs", std::to_string(args.inputs)},
+            {"seed", std::to_string(args.seed)},
+            {"address_type", json_string("tile_id")},
+            {"tie_break", json_string(tb)},
+            {"diff_dims", std::to_string(args.diff_dims)},
+            {"bias", json_number(args.bias)},
+            {"sweep", json_string("p_zero")},
+            {"p_zero", json_number(p_zero)},
+            {"flip_prob", json_number(args.flip_prob)},
+            {"routing_ms", json_number(routing_ms)},
+            {"routes_per_s", json_number(rps)},
+            {"tie_rate", json_number(s0.tie_rate)},
+            {"near_tie_rate", json_number(s0.near_tie_rate)},
+            {"margin_mean", json_number(s0.margin_mean)},
+            {"churn", json_number(churn)},
+        });
+      }
     }
 
     return 0;
