@@ -13,6 +13,7 @@ This index points you to the highest-signal docs first.
 - `docs/INSTALL.md` (setup, optional native builds)
 - `docs/QUICKSTART.md` (SparseLookup v2 + CompiledDispatch walkthrough)
 - `docs/BENCHMARKS.md` (canonical benchmark entrypoints)
+- `docs/CLI.md` (doctor/bench/bundle commands)
 
 ## Routing As A Primitive (Engineering)
 
@@ -21,6 +22,7 @@ This index points you to the highest-signal docs first.
 - `docs/DOT_POPCOUNT_EQUIVALENCE.md` (exact conditions for dot vs XOR+POPCNT equivalence)
 - `docs/XOR_SUPERPOSITION.md` (lossless signature compression + routing equivalence conditions)
 - `docs/LIFECYCLE_V1.md` (lifecycle wrapper semantics and falsification notes)
+- `src/trix/nn/bundle.py` (bundle export/import utilities)
 - `native/README.md` (C++ routing benchmark + falsification + degeneracy detector)
 
 ## API References

@@ -42,6 +42,9 @@ all = [
 Homepage = "https://github.com/trix/trix"
 Repository = "https://github.com/trix/trix"
 
+[project.scripts]
+trix = "trix.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["trix*"]

@@ -203,6 +203,12 @@ M4: Compression guarantees
 M5: Native correctness harness
 - consistent reference-vs-native comparison tests and failure diagnostics.
 
+M6 (Mesa 14): Address Space Mesa
+- Ship a durable, portable address artifact bundle (compressed signatures + dispatch contract + metadata + validation report).
+- Normalize telemetry across routing backends (backend name, tie/near-tie, margins, compression stats snapshot, contract hit/miss/fallback).
+- Make contract lifecycle explicit: validate -> ship -> monitor -> invalidate/rebuild.
+- Promote drift-under-optimization to a first-class benchmark artifact (churn curve + contract hit-rate curve).
+
 ## 9. Metrics
 
 Quality:

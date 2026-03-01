@@ -47,6 +47,17 @@ Notes:
 - Native acceleration is optional. Tests pass without the native library.
 - Some experiment tests (e.g. GMP-backed number theory) are skipped if optional deps are missing.
 
+## CLI
+
+If installed in editable mode, you can use the `trix` CLI:
+
+```bash
+trix doctor
+trix bench --outdir results/benchmarks_v1 --device cpu
+```
+
+See `docs/CLI.md`.
+
 ## Benchmarks
 
 Canonical benchmark entrypoints live in `docs/BENCHMARKS.md`.
