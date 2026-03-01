@@ -271,15 +271,21 @@ def evaluate_drift_policy_on_suite(
     max_drift_fraction = float(max(drift_frac)) if drift_frac else None
     min_hit_rate = float(min(compiled_hit_rate)) if compiled_hit_rate else None
 
+    warnings: list[str] = []
+
     # Optional: parse telemetry jsonl for near-tie + margin signals.
     telemetry_jsonl = drift.get("telemetry", {}).get("jsonl")
     near_tie_max = None
     margin_mean_mean = None
     if telemetry_jsonl:
         try:
+            tp = Path(telemetry_jsonl)
+            if not tp.exists():
+                warnings.append(f"telemetry jsonl missing: {telemetry_jsonl}")
+                raise FileNotFoundError(str(tp))
             vals_near: list[float] = []
             vals_margin: list[float] = []
-            with Path(telemetry_jsonl).open("r", encoding="utf-8") as f:
+            with tp.open("r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -297,7 +303,8 @@ def evaluate_drift_policy_on_suite(
                 margin_mean_mean = float(sum(vals_margin) / len(vals_margin))
         except Exception:
             # Telemetry is optional; do not fail drift evaluation.
-            pass
+            if not warnings:
+                warnings.append("telemetry jsonl parse failed")
 
     ok = True
     reasons: list[str] = []
@@ -341,5 +348,6 @@ def evaluate_drift_policy_on_suite(
         },
         "ok": ok,
         "reasons": reasons,
+        "warnings": warnings,
     }
     return ok, report

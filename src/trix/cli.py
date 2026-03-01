@@ -175,7 +175,16 @@ def _load_bundle(args: argparse.Namespace) -> int:
     from trix.nn.bundle import load_address_bundle, validate_compiled_semantics
     from trix.nn.integrity import check_bundle_compatibility, verify_manifest
 
-    bundle, ffn, compiled = load_address_bundle(outdir=args.outdir, device=args.device)
+    try:
+        bundle, ffn, compiled = load_address_bundle(
+            outdir=args.outdir, device=args.device
+        )
+    except Exception as e:
+        if getattr(args, "json", False):
+            print(json.dumps({"ok": False, "error": str(e)}, indent=2, sort_keys=True))
+        else:
+            print(f"FAIL: {e}")
+        return 2
     out: Dict[str, Any] = {
         "bundle": str(bundle.outdir),
         "ffn": bundle.config.get("ffn_type"),
