@@ -12,6 +12,7 @@ This index points you to the highest-signal docs first.
 - `README.md` (repo overview, install, tests, pointers)
 - `docs/INSTALL.md` (setup, optional native builds)
 - `docs/QUICKSTART.md` (SparseLookup v2 + CompiledDispatch walkthrough)
+- `docs/BENCHMARKS.md` (canonical benchmark entrypoints)
 
 ## Routing As A Primitive (Engineering)
 

@@ -477,6 +477,55 @@ class SparseLookupFFNv2(nn.Module):
 
         return output, routing_info, aux_losses
 
+    def forward_forced_tile(
+        self,
+        x: torch.Tensor,
+        *,
+        tile_idx: int,
+    ) -> Tuple[torch.Tensor, Dict, Dict]:
+        """Forward pass that forces a specific tile (bypasses routing).
+
+        This is used by CompiledDispatch to turn a compiled class->tile mapping
+        into a deterministic execution path.
+        """
+        if x.dim() == 2:
+            x = x.unsqueeze(1)
+        if x.dim() != 3:
+            raise ValueError("x must have shape [B,T,D] (or [B,D])")
+
+        if not (0 <= tile_idx < self.num_tiles):
+            raise ValueError(f"tile_idx out of range: {tile_idx}")
+
+        B, T, D = x.shape
+
+        x_norm = self.norm(x)
+        x_flat = x_norm.view(-1, D)
+
+        compressed = self.compress(x_flat)
+
+        scale = self.magnitude_splines[tile_idx](compressed).squeeze(-1)
+        out_flat = scale.unsqueeze(-1) * self.directions[tile_idx]
+
+        out = out_flat.view(B, T, D) * self.output_scale
+        out = self.dropout(out)
+        out = x + out
+
+        routing_info = {
+            "tile_idx": torch.full((B, T), tile_idx, dtype=torch.long, device=x.device),
+            "compressed": compressed.view(B, T, 2),
+            "forced": True,
+        }
+
+        aux_losses = {
+            "balance": torch.tensor(0.0, device=x.device),
+            "ternary": torch.tensor(0.0, device=x.device),
+            "sparsity": torch.tensor(0.0, device=x.device),
+            "diversity": torch.tensor(0.0, device=x.device),
+            "total_aux": torch.tensor(0.0, device=x.device),
+        }
+
+        return out, routing_info, aux_losses
+
     def _update_claim_matrix(
         self, tile_idx: torch.Tensor, labels: torch.Tensor
     ) -> None:
