@@ -47,6 +47,16 @@ Notes:
 - Native acceleration is optional. Tests pass without the native library.
 - Some experiment tests (e.g. GMP-backed number theory) are skipped if optional deps are missing.
 
+## Benchmarks
+
+Canonical benchmark entrypoints live in `docs/BENCHMARKS.md`.
+
+Run suite v1 (CPU-first, emits JSON + JSONL artifacts):
+
+```bash
+python experiments/benchmarks/benchmark_suite_v1.py --outdir results/benchmarks_v1 --device cpu
+```
+
 ## Quick Start
 
 ### SparseLookupFFN (recommended starting point)
@@ -105,6 +115,9 @@ Build:
 cmake -S src/trix/kernel -B src/trix/kernel/build
 cmake --build src/trix/kernel/build -j
 ```
+
+Correctness note:
+- When the native library is present, `tests/test_kernel_reference_harness.py` enforces native-vs-reference equivalence.
 
 ## Native Routing Tools (C++)
 
