@@ -18,6 +18,7 @@ This index points you to the highest-signal docs first.
 - `PRD.md` (current direction)
 - `docs/ADDRESS_CONTRACT.md` (address invariants + telemetry schema)
 - `docs/DOT_POPCOUNT_EQUIVALENCE.md` (exact conditions for dot vs XOR+POPCNT equivalence)
+- `docs/LIFECYCLE_V1.md` (lifecycle wrapper semantics and falsification notes)
 - `native/README.md` (C++ routing benchmark + falsification + degeneracy detector)
 
 ## API References

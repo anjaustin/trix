@@ -98,6 +98,9 @@ Stability fields:
 Notes:
 - v1 telemetry is intentionally minimal: it is meant to be lightweight and dependency-free.
 
+Clarification:
+- Tie/margin fields are router-dependent. For hierarchical routers, these may reflect a cluster-local decision rather than a global over-all-tiles comparison. See `docs/LIFECYCLE_V1.md`.
+
 Optional fields (v1 extensions):
 - `tie_rate` (number) : fraction of inputs that had argmax ties
 - `near_tie_rate` (number) : fraction of inputs with (best-second_best) <= 2
