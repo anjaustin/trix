@@ -14,15 +14,12 @@ TriX is a neural network architecture where **routing IS computation**. Instead 
 
 ## Installation
 
-```python
-# From the trix_latest directory
-import sys
-sys.path.insert(0, '/workspace/trix_latest/src')
+Follow `docs/INSTALL.md`.
 
-from trix.nn import (
-    SparseLookupFFNv2,      # The core FFN with surgery + regularizers
-    CompiledDispatch,        # Path compilation wrapper
-)
+At minimum:
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 ---
@@ -340,17 +337,11 @@ print(f"Diversity: {stats['diversity']:.2f}")
 ## Running Tests
 
 ```bash
-# All tests
-pytest tests/ -v
+python -m pytest
 
-# Just v2 tests
-pytest tests/test_sparse_lookup_v2.py -v
-
-# Just compiled dispatch tests
-pytest tests/test_compiled_dispatch.py -v
-
-# A/B harness tests
-pytest tests/test_ab_harness.py -v
+python -m pytest tests/test_sparse_lookup_v2.py -v
+python -m pytest tests/test_compiled_dispatch.py -v
+python -m pytest tests/test_ab_harness.py -v
 ```
 
 ---
@@ -359,13 +350,13 @@ pytest tests/test_ab_harness.py -v
 
 ```bash
 # 6502 organ discovery
-python experiments/trix_6502_v2_organs.py
+python experiments/cpu_6502/trix_6502_v2_organs.py
 
 # A/B comparison (dynamic vs compiled)
-python experiments/ab_harness_compiled.py
+python experiments/architecture/ab_harness_compiled.py
 
 # v2 benchmark
-python experiments/benchmark_v2_rigorous.py
+python experiments/benchmarks/benchmark_v2_rigorous.py
 ```
 
 ---
@@ -376,8 +367,8 @@ python experiments/benchmark_v2_rigorous.py
 |------|---------|
 | `src/trix/nn/sparse_lookup_v2.py` | Core FFN with surgery + regularizers |
 | `src/trix/nn/compiled_dispatch.py` | Path compilation |
-| `tests/test_sparse_lookup_v2.py` | 39 v2 tests |
-| `tests/test_compiled_dispatch.py` | 21 compilation tests |
+| `tests/test_sparse_lookup_v2.py` | v2 tests |
+| `tests/test_compiled_dispatch.py` | compilation tests |
 | `tests/test_ab_harness.py` | A/B comparison tests |
 | `docs/SPARSE_LOOKUP_V2_API.md` | Full API reference |
 | `docs/SESSION_SUMMARY_MESA_1_2_3.md` | Complete session docs |

@@ -32,21 +32,20 @@ We compile the ROUTING to FP4. The arithmetic stays exact.
 
 ## Quick Start
 
-```python
-import sys
-sys.path.insert(0, 'src')
-sys.path.insert(0, 'experiments/fft_atoms')
+From the repo root:
 
-from fft_compiler import test_compiled_wht, test_compiled_complex_fft
+```bash
+python -m pip install -e ".[dev]"
 
-# Walsh-Hadamard Transform (compiled routing)
-test_compiled_wht(8)   # 100% exact
-test_compiled_wht(16)  # 100% exact
-test_compiled_wht(32)  # 100% exact
+# Run the FFT compiler helpers (kept under experiments/)
+PYTHONPATH=experiments/fft_atoms python -c "from fft_compiler import test_compiled_wht, test_compiled_complex_fft; test_compiled_wht(8); test_compiled_wht(16); test_compiled_wht(32); test_compiled_complex_fft(8); test_compiled_complex_fft(16)"
 
-# Complex FFT (Cooley-Tukey DIT)
-test_compiled_complex_fft(8)   # Exact to float precision
-test_compiled_complex_fft(16)  # Exact to float precision
+```
+
+If you're working in a notebook and want imports to resolve without installing:
+
+```bash
+PYTHONPATH=src:experiments/fft_atoms python -c "from fft_compiler import test_compiled_wht; test_compiled_wht(8)"
 ```
 
 ---

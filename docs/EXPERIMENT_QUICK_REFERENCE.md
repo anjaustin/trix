@@ -3,19 +3,19 @@
 ## Running the Experiments
 
 ```bash
-cd /workspace/trix_latest
+python -m pip install -e ".[dev]"
 
 # 1. Original thesis demo (single run)
-python experiments/geometry_thesis.py
+python experiments/thesis/geometry_thesis.py
 
 # 2. Convergence test (10 seeds, ~2 min)
-python experiments/convergence_test.py
+python experiments/architecture/convergence_test.py
 
 # 3. Fuzzy boundary tests (~1 min)
-python experiments/fuzzy_boundary_test.py
+python experiments/architecture/fuzzy_boundary_test.py
 
 # 4. Full test suite (verify nothing broke)
-python -m pytest tests/ -v
+python -m pytest
 ```
 
 ## Expected Results Summary
@@ -33,9 +33,11 @@ python -m pytest tests/ -v
 
 ```
 experiments/
-├── geometry_thesis.py       # Minimal proof of concept
-├── convergence_test.py      # Multi-seed validation  
-└── fuzzy_boundary_test.py   # Robustness tests
+├── thesis/geometry_thesis.py                # Minimal proof of concept
+└── architecture/
+    ├── convergence_test.py                 # Multi-seed validation
+    ├── fuzzy_boundary_test.py              # Robustness tests
+    └── signature_surgery.py                # Surgery experiment
 
 notes/
 ├── emergence_session_01_raw.md         # Raw exploration
@@ -97,7 +99,7 @@ routing_loss = F.nll_loss(
 
 ### Signature Surgery ✓
 ```bash
-python experiments/signature_surgery.py
+python experiments/architecture/signature_surgery.py
 ```
 **Result:** Hand-designed signature claimed 100% of target class.
 System enhanced design with discriminative negatives.

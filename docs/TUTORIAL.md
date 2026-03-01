@@ -29,15 +29,8 @@ The result: neural networks that compute **exactly**, with mathematical guarante
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/trix.git
-cd trix
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Verify installation
-python -m pytest tests/ -v --tb=short
+python -m pip install -e ".[dev]"
+python -m pytest
 ```
 
 ---
@@ -51,9 +44,6 @@ An **atom** is the smallest unit of computation in TriX. It's a tiny neural netw
 ### Your First Atom: AND Gate
 
 ```python
-import sys
-sys.path.insert(0, 'src')
-
 from trix.compiler.atoms_fp4 import FP4AtomLibrary
 import torch
 

@@ -102,9 +102,9 @@
 
 **Gap:** No clear installation instructions. Assumes reader has environment set up.
 
-**Closing action:** Create `INSTALL.md` with step-by-step setup.
+**Closing action:** Create `docs/INSTALL.md` with step-by-step setup.
 
-**Resolution:** Installation instructions included in `docs/TUTORIAL.md` and README.
+**Resolution:** Installation instructions included in `README.md`, `docs/INSTALL.md`, and `docs/TUTORIAL.md`.
 
 ---
 

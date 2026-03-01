@@ -186,27 +186,18 @@ FineWeb-Edu (1.3T tokens)
 ## File Structure
 
 ```
-/workspace/trix_latest/
-├── data/
-│   ├── tiny_train.bin      # 5M tokens
-│   ├── tiny_val.bin        # 250K tokens
-│   ├── small_train.bin     # 50M tokens
-│   ├── small_val.bin       # 2.5M tokens
-│   ├── medium_train.bin    # 500M tokens
-│   └── medium_val.bin      # 25M tokens
-├── checkpoints/
-│   ├── tiny/
-│   ├── small/
-│   └── medium/
+./
+├── experiments/training/
+│   ├── prepare_data.py     # Download & tokenize (experimental)
+│   └── train.py            # Training script (experimental)
 ├── scripts/
-│   ├── prepare_data.py     # Download & tokenize FineWeb-Edu
-│   ├── train.py            # Main training script
-│   └── benchmark_thor.py   # Hardware benchmarks (done)
-└── configs/
-    ├── tiny.yaml
-    ├── small.yaml
-    └── medium.yaml
+│   └── benchmark_thor.py   # Hardware benchmark script
+└── data/                   # (optional) local datasets
 ```
+
+Note:
+- Earlier versions of this plan referenced an external workspace layout (e.g. `/workspace/trix_latest/`).
+- For reproducible local setup, follow `docs/INSTALL.md` and run from the repo root.
 
 ---
 
