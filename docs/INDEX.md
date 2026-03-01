@@ -53,3 +53,7 @@ Experiments are intentionally separate from the core test surface and may requir
 ## Research Notes
 
 Many `docs/*.md` files are session logs, synthesis notes, and exploratory writeups. Treat them as archival context unless they are explicitly referenced by the docs above.
+
+## Archive
+
+Older and non-essential docs are kept under `docs/archive/`.
