@@ -18,6 +18,9 @@ Run the canonical benchmark suite v1 (writes JSON + JSONL artifacts):
 trix bench --outdir results/benchmarks_v1 --device cpu
 ```
 
+Note:
+- `trix bench` runs scripts from `experiments/` and therefore expects a repo checkout (editable install).
+
 On success it prints a short summary and writes:
 - `suite_v1.json`
 - `routing_telemetry.jsonl`
