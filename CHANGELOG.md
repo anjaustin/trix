@@ -2,6 +2,10 @@
 
 All notable changes to TriX are documented here.
 
+> **Note:** Doc paths referenced in older entries (e.g. `docs/TUTORIAL.md`,
+> `docs/MESA8_NEURAL_CUDA.md`) may have moved to `docs/archive/`. See
+> `docs/INDEX.md` for current doc locations.
+
 ---
 
 ## [0.12.0] - 2024-12-19

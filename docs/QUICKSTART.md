@@ -425,8 +425,8 @@ print(f"Math tile claims {claim_rate:.0%} of math")
 ## Next Steps
 
 1. **Read the full API docs**: `docs/SPARSE_LOOKUP_V2_API.md`
-2. **Understand the theory**: `docs/SEMANTIC_GEOMETRY_THESIS.md`
-3. **See what we proved**: `docs/SESSION_SUMMARY_MESA_1_2_3.md`
+2. **Understand the theory**: `docs/archive/SEMANTIC_GEOMETRY_THESIS.md`
+3. **See what we proved**: `docs/archive/SESSION_SUMMARY_MESA_1_2_3.md`
 4. **Run experiments**: `experiments/` directory
 5. **Explore the notes**: `notes/` for raw thinking process
 
