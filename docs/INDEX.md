@@ -31,6 +31,7 @@ This index points you to the highest-signal docs first.
 - `docs/DOT_POPCOUNT_EQUIVALENCE.md` (exact conditions for dot vs XOR+POPCNT equivalence)
 - `docs/XOR_SUPERPOSITION.md` (lossless signature compression + routing equivalence conditions)
 - `docs/LIFECYCLE_V1.md` (lifecycle wrapper semantics and falsification notes)
+- `docs/SOFT_CHIP.md` (soft chip: cache-resident subroutines + routing-as-control)
 - `src/trix/nn/bundle.py` (bundle export/import utilities)
 - `native/README.md` (C++ routing benchmark + falsification + degeneracy detector)
 

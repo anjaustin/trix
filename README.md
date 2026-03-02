@@ -16,6 +16,8 @@ The practical throughline is treating routing as a **first-class artifact** you 
 
 Core idea: **Don't learn what you can read.**
 
+Related concept note: `docs/SOFT_CHIP.md` (cache-resident subroutines / "soft chip" idea for training efficiency).
+
 ## What TriX Is
 
 - A set of PyTorch modules under `src/trix/nn/` for sparse/conditional FFNs.
