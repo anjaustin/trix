@@ -17,6 +17,7 @@ The practical throughline is treating routing as a **first-class artifact** you 
 Core idea: **Don't learn what you can read.**
 
 Related concept note: `docs/SOFT_CHIP.md` (cache-resident subroutines / "soft chip" idea for training efficiency).
+Related systems note: `docs/CACHE_COHERENCY.md` (use coherency + bucketing as a CPU primitive).
 
 ## What TriX Is
 

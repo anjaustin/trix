@@ -32,6 +32,8 @@ This index points you to the highest-signal docs first.
 - `docs/XOR_SUPERPOSITION.md` (lossless signature compression + routing equivalence conditions)
 - `docs/LIFECYCLE_V1.md` (lifecycle wrapper semantics and falsification notes)
 - `docs/SOFT_CHIP.md` (soft chip: cache-resident subroutines + routing-as-control)
+- `docs/CACHE_COHERENCY.md` (CPU coherency as a primitive)
+- `docs/SPEC_COHERENT_ENGINE.md` (spec: route-bucket-execute engine for CPU)
 - `src/trix/nn/bundle.py` (bundle export/import utilities)
 - `native/README.md` (C++ routing benchmark + falsification + degeneracy detector)
 
