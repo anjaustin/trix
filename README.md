@@ -51,6 +51,30 @@ Notes:
 - Native acceleration is optional. Tests pass without the native library.
 - Some experiment tests (e.g. GMP-backed number theory) are skipped if optional deps are missing.
 
+## P0-1 to P0-4: Repo Hygiene + Repro Journey
+
+This repo is archived, but we still keep a CPU-first, falsifiable path that a new reader can run quickly.
+
+- `P0-1` Archive historical snapshots: moved `TriXO/` + `TriXOR/` to `archive/` to prevent accidental `pip install -e .` namespace shadowing (they both declare `name = "trix"`).
+- `P0-2` Fix doc link rot: repaired references and copied Mesa 11/12/13 docs into `docs/archive/` so older changelog entries remain navigable.
+- `P0-3` Formalize tier boundaries: experiment-dependent tests now skip cleanly when `experiments/` (or optional deps) are absent.
+- `P0-4` Add golden-output repro scripts: `scripts/repro/` turns key changelog claims into single-command checks that diff against saved `.expected.json` outputs.
+
+Quick repro commands (CPU):
+
+```bash
+trix doctor
+python -m pytest -q
+trix bench --outdir results/benchmarks_v1 --device cpu
+
+python scripts/repro/repro_xor_compression.py
+python scripts/repro/repro_compiled_dispatch.py
+python scripts/repro/repro_dft_compilation.py
+```
+
+Notes:
+- `repro_dft_compilation.py` requires `experiments/fft_atoms/`; it prints `SKIP` in wheel installs.
+
 ## CLI
 
 If installed in editable mode, you can use the `trix` CLI:
