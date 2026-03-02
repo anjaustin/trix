@@ -1,4 +1,8 @@
-# TriX (Ternary Routing with Isomorphic eXecution)
+# TriX (Archived)
+
+> **Active development has moved to [trix-z](../trix-z/).** This repo is preserved as the historical record with full git history, archived snapshots (TriXO/TriXOR), exploration journals, and mesa session notes.
+
+---
 
 TriX is a research-oriented library for **routing-driven** transformer FFNs and related "compute-as-routing" experiments.
 
