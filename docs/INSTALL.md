@@ -1,5 +1,7 @@
 # Install
 
+Note: this repo is archived. Active development lives in `../trix-z/`.
+
 This is the canonical setup guide for the root `trix` package.
 
 ## Python Package

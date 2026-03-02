@@ -1,5 +1,8 @@
 # TriX v2 Quickstart Guide
 
+Note: this repo is archived. Active development lives in `../trix-z/`.
+This quickstart describes the snapshot in this repository and may be superseded.
+
 *From zero to compiled dispatch in 10 minutes.*
 
 ---

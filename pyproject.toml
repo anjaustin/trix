@@ -43,8 +43,8 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/trix/trix"
-Repository = "https://github.com/trix/trix"
+Homepage = "https://github.com/anjaustin/trix"
+Repository = "https://github.com/anjaustin/trix"
 
 [project.scripts]
 trix = "trix.cli:main"

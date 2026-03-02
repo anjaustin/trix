@@ -1,5 +1,8 @@
 # Docs Index
 
+This repository is archived. Active development lives in `../trix-z/`.
+If you are looking for the current state of the project, start there.
+
 This repo contains a mix of:
 - practical "how to run it" documentation,
 - API references,
@@ -10,6 +13,7 @@ This index points you to the highest-signal docs first.
 ## Start Here
 
 - `README.md` (repo overview, install, tests, pointers)
+- `ARCHIVED.md` (what belongs in this repo vs `../trix-z/`)
 - `docs/INSTALL.md` (setup, optional native builds)
 - `docs/QUICKSTART.md` (SparseLookup v2 + CompiledDispatch walkthrough)
 - `docs/BENCHMARKS.md` (canonical benchmark entrypoints)

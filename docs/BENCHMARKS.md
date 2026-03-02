@@ -1,5 +1,7 @@
 # Benchmarks
 
+Note: this repo is archived. Active development lives in `../trix-z/`.
+
 This repo includes a small, CPU-first benchmark suite intended to make core claims falsifiable.
 
 ## Suite v1
